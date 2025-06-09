@@ -48,9 +48,7 @@ public class SongController {
             }
             return ResponseEntity.badRequest().body(errors);
         }
-
-        System.out.println(multipartFile.getContentType());
-        if (!multipartFile.getContentType().equals("audio/mp4") || !multipartFile.getContentType().equals("audio/mp3") || multipartFile.isEmpty()) {
+        if (!(multipartFile.getContentType().equals("audio/mp4") || multipartFile.getContentType().equals("audio/mpeg")) || multipartFile.isEmpty()) {
             return ResponseEntity.badRequest().body("Upload audio file.");
         }
 
