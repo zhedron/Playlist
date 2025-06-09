@@ -33,8 +33,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequests -> {
-                    authorizeRequests.requestMatchers("/song/create", "/playlist/add/*").authenticated()
-                            .requestMatchers("/user/**", "/login", "/user/:id").permitAll();
+                    authorizeRequests.requestMatchers("/user/**", "/login", "/user/:id", "/song/file/*").permitAll()
+                            .requestMatchers("/song/**", "/playlist/add/*", "/user/playlist/**").authenticated();
                 }).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

@@ -16,4 +16,8 @@ public interface UserService {
     List<PlaylistDTO> getPlaylists(long userId);
 
     List<PlaylistDTO> getPlaylistsByArtistNameOrAlbumName(String artistName, String albumName);
+
+    void deletePlaylist(long playlistId);
+
+    User getCurrentUser();
 }

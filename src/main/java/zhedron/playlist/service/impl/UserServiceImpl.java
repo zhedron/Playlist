@@ -12,12 +12,15 @@ import zhedron.playlist.entity.Playlist;
 import zhedron.playlist.entity.User;
 import zhedron.playlist.enums.Role;
 import zhedron.playlist.exceptions.ArtistAndAlbumNotFoundException;
+import zhedron.playlist.exceptions.PlaylistNotFoundException;
 import zhedron.playlist.exceptions.UserExistException;
 import zhedron.playlist.exceptions.UserNotFoundException;
 import zhedron.playlist.mappers.UserMapper;
+import zhedron.playlist.repository.PlaylistRepository;
 import zhedron.playlist.repository.UserRepository;
 import zhedron.playlist.service.UserService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -29,11 +32,14 @@ public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
 
+    private final PlaylistRepository playlistRepository;
+
     @Autowired
-    public UserServiceImpl(UserRepository repository, PasswordEncoder passwordEncoder, UserMapper userMapper) {
+    public UserServiceImpl(UserRepository repository, PasswordEncoder passwordEncoder, UserMapper userMapper, PlaylistRepository playlistRepository) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
+        this.playlistRepository = playlistRepository;
     }
 
     @Override
@@ -45,6 +51,7 @@ public class UserServiceImpl implements UserService {
         log.info("Saved user {}", user);
         user.setRole(Role.ADMIN);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setCreatedAt(LocalDateTime.now());
         return repository.save(user);
     }
 
@@ -82,5 +89,31 @@ public class UserServiceImpl implements UserService {
         List<Playlist> playlists = repository.findPlaylistsByUserIdAndArtistNameOrAlbumName(artistName, albumName, findByEmail(auth.getName()).getId());
 
         return userMapper.playlistsToPlaylistDTOs(playlists);
+    }
+
+    @Override
+    public void deletePlaylist(long playlistId) {
+        User user = getCurrentUser();
+
+        Playlist playlist = playlistRepository.findById(playlistId);
+
+        if (!user.getPlaylists().contains(playlist)) {
+            throw new PlaylistNotFoundException("Playlist not found with " + playlistId);
+        }
+
+        playlistRepository.delete(playlist);
+
+        log.info("Deleted playlist {}, {}, {}", playlist.getSongs().get(0).getArtistName(), playlist.getSongs().get(0).getAlbumName(), playlist.getSongs().get(0).getViews());
+    }
+
+    @Override
+    public User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        String email = auth.getName();
+
+        User user = findByEmail(email);
+
+        return user;
     }
 }

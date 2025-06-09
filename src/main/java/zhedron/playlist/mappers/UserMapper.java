@@ -11,8 +11,7 @@ import java.util.List;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface UserMapper {
-
     UserDTO userToUserDTO(User user);
-
+    
     List<PlaylistDTO> playlistsToPlaylistDTOs(List<Playlist> playlists);
 }

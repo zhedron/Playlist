@@ -3,6 +3,9 @@ package zhedron.playlist.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "playlists")
 @Data
@@ -11,9 +14,8 @@ public class Playlist {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    private String artistName;
-
-    private String albumName;
+    @ManyToMany
+    private List<Song> songs = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "user_id")

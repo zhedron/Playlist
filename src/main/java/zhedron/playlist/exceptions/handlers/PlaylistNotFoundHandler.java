@@ -4,15 +4,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import zhedron.playlist.exceptions.UserNotFoundException;
+import zhedron.playlist.exceptions.PlaylistNotFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
-public class UserNotFoundHandler {
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<Map<String, String>> handleUserExistHandler(UserNotFoundException e) {
+public class PlaylistNotFoundHandler {
+    @ExceptionHandler(PlaylistNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handePlaylistNotFound(PlaylistNotFoundException e) {
         Map<String, String> map = new HashMap<>();
         map.put("message", e.getMessage());
 

@@ -1,4 +1,6 @@
 package zhedron.playlist.dto;
 
-public record PlaylistDTO(long id, String artistName, String albumName, long views) {
+import java.util.List;
+
+public record PlaylistDTO(long id, List<SongDTO> songs, long views) {
 }
