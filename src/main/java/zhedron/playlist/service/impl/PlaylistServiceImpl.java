@@ -36,8 +36,6 @@ public class PlaylistServiceImpl implements PlaylistService {
 
         Playlist playlist = new Playlist();
 
-        /*playlist.setArtistName(song.getArtistName());
-        playlist.setAlbumName(song.getAlbumName());*/
         playlist.getSongs().add(song);
         playlist.setUser(user);
 
