@@ -56,8 +56,6 @@ public class AuthController {
 
         if (userFound != null) {
             token = jwtService.generateToken(userFound.getEmail());
-
-            System.out.println("google " + oAuth2User.getAttributes().get("email"));
         }
 
         return ResponseEntity.ok(token);

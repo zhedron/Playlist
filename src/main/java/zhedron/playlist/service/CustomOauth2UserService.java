@@ -29,8 +29,6 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
         Map<String, Object> attributes = new HashMap<>();
 
         if (token != null) {
-            System.out.println("Token Google JWT -> " + token);
-
             String email = (String) oAuth2User.getAttributes().get("email");
 
             attributes.put("email", email);
