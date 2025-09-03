@@ -14,6 +14,7 @@ import zhedron.playlist.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class CustomOauth2UserService extends DefaultOAuth2UserService {
@@ -34,15 +35,19 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
             attributes.put("email", email);
             attributes.put("name", oAuth2User.getAttributes().get("name"));
 
-            User user = new User();
+            Optional<User> userFound = userRepository.findByEmail(email);
 
-            user.setEmail(email);
-            user.setBlocked(false);
-            user.setCreatedAt(LocalDateTime.now());
-            user.setProvider(Provider.google);
-            user.setRole(Role.USER);
+            if (userFound.isEmpty()) {
+                User user = new User();
 
-            userRepository.save(user);
+                user.setEmail(email);
+                user.setBlocked(false);
+                user.setCreatedAt(LocalDateTime.now());
+                user.setProvider(Provider.google);
+                user.setRole(Role.USER);
+
+                userRepository.save(user);
+            }
         }
 
         return new DefaultOAuth2User(oAuth2User.getAuthorities(), attributes, "email");
