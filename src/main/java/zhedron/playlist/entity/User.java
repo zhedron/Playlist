@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import zhedron.playlist.enums.Provider;
 import zhedron.playlist.enums.Role;
 
 import java.time.LocalDateTime;
@@ -32,4 +33,9 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     private List<Playlist> playlists;
+
+    private boolean blocked;
+
+    @Enumerated(EnumType.STRING)
+    private Provider provider;
 }

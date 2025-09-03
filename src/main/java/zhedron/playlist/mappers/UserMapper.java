@@ -14,4 +14,6 @@ public interface UserMapper {
     UserDTO userToUserDTO(User user);
     
     List<PlaylistDTO> playlistsToPlaylistDTOs(List<Playlist> playlists);
+
+    User userDTOToUser(UserDTO userDTO);
 }

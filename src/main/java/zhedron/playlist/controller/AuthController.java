@@ -5,6 +5,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,5 +42,24 @@ public class AuthController {
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
         }
+    }
+
+    @GetMapping("/google")
+    public ResponseEntity<String> google() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+
+        User userFound = userService.findByEmail((String) oAuth2User.getAttributes().get("email"));
+
+        String token = null;
+
+        if (userFound != null) {
+            token = jwtService.generateToken(userFound.getEmail());
+
+            System.out.println("google " + oAuth2User.getAttributes().get("email"));
+        }
+
+        return ResponseEntity.ok(token);
     }
 }

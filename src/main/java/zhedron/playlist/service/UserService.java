@@ -20,4 +20,6 @@ public interface UserService {
     void deletePlaylist(long playlistId);
 
     User getCurrentUser();
+
+    void blockUser(long userId);
 }

@@ -67,4 +67,11 @@ public class UserController {
 
         return ResponseEntity.ok("Playlist deleted successfully");
     }
+
+    @PutMapping("/block/{id}")
+    public ResponseEntity<String> block(@PathVariable long id) {
+        userService.blockUser(id);
+
+        return ResponseEntity.ok("User blocked successfully");
+    }
 }

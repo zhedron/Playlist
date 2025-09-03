@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import zhedron.playlist.config.filter.JwtFilter;
+import zhedron.playlist.service.CustomOauth2UserService;
 import zhedron.playlist.service.impl.UserDetailsImpl;
 
 @Configuration
@@ -24,18 +25,27 @@ import zhedron.playlist.service.impl.UserDetailsImpl;
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
+    private final CustomOauth2UserService customOauth2UserService;
 
-    public SecurityConfig (JwtFilter jwtFilter) {
+    public SecurityConfig (JwtFilter jwtFilter, CustomOauth2UserService customOauth2UserService) {
         this.jwtFilter = jwtFilter;
+        this.customOauth2UserService = customOauth2UserService;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequests -> {
-                    authorizeRequests.requestMatchers("/user/**", "/login", "/user/:id", "/song/file/*").permitAll()
-                            .requestMatchers("/song/**", "/playlist/add/*", "/user/playlist/**").authenticated();
-                }).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                    authorizeRequests
+                            .requestMatchers("/user/block/*").hasAuthority("ADMIN")
+                            .requestMatchers("/user/**", "/login", "/song/file/*").permitAll()
+                            .anyRequest().authenticated();
+                }).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .oauth2Login(oauth2 -> {
+                    oauth2.userInfoEndpoint(userInfo ->
+                        userInfo.userService(customOauth2UserService));
+                    oauth2.defaultSuccessUrl("/google", true);
+                });
         return http.build();
     }
 

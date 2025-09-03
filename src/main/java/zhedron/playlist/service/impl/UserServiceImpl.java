@@ -10,11 +10,9 @@ import zhedron.playlist.dto.PlaylistDTO;
 import zhedron.playlist.dto.UserDTO;
 import zhedron.playlist.entity.Playlist;
 import zhedron.playlist.entity.User;
+import zhedron.playlist.enums.Provider;
 import zhedron.playlist.enums.Role;
-import zhedron.playlist.exceptions.ArtistAndAlbumNotFoundException;
-import zhedron.playlist.exceptions.PlaylistNotFoundException;
-import zhedron.playlist.exceptions.UserExistException;
-import zhedron.playlist.exceptions.UserNotFoundException;
+import zhedron.playlist.exceptions.*;
 import zhedron.playlist.mappers.UserMapper;
 import zhedron.playlist.repository.PlaylistRepository;
 import zhedron.playlist.repository.UserRepository;
@@ -52,6 +50,9 @@ public class UserServiceImpl implements UserService {
         user.setRole(Role.ADMIN);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setCreatedAt(LocalDateTime.now());
+        user.setBlocked(false);
+        user.setProvider(Provider.local);
+
         return repository.save(user);
     }
 
@@ -114,6 +115,23 @@ public class UserServiceImpl implements UserService {
 
         User user = findByEmail(email);
 
+        if (user.isBlocked()) {
+            throw new UserBlockedException("User " + user.getEmail() + " is blocked");
+        }
+
         return user;
+    }
+
+    @Override
+    public void blockUser(long userId) {
+        UserDTO userDTO = getById(userId);
+
+        User user = userMapper.userDTOToUser(userDTO);
+
+        user.setBlocked(true);
+
+        repository.save(user);
+
+        log.info("Blocked user {}", user);
     }
 }
