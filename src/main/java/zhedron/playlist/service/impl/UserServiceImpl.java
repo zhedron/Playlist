@@ -46,12 +46,14 @@ public class UserServiceImpl implements UserService {
             throw new UserExistException("Email already exists, use other email");
         }
 
-        log.info("Saved user {}", user);
+
         user.setRole(Role.ADMIN);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setCreatedAt(LocalDateTime.now());
         user.setBlocked(false);
         user.setProvider(Provider.local);
+
+        log.info("Saved user {}", user);
 
         return repository.save(user);
     }
