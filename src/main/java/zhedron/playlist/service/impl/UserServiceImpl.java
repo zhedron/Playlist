@@ -46,6 +46,9 @@ public class UserServiceImpl implements UserService {
             throw new UserExistException("Email already exists, use other email");
         }
 
+        if (user.getAbout() == null || user.getAbout().isEmpty()) {
+            user.setAbout("There is no description");
+        }
 
         user.setRole(Role.ADMIN);
         user.setPassword(passwordEncoder.encode(user.getPassword()));

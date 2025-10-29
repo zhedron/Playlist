@@ -40,6 +40,11 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
             if (userFound.isEmpty()) {
                 User user = new User();
 
+                if (user.getAbout() == null || user.getAbout().isEmpty()) {
+                    user.setAbout("There is no description");
+                }
+
+                user.setName((String) attributes.get("name"));
                 user.setEmail(email);
                 user.setBlocked(false);
                 user.setCreatedAt(LocalDateTime.now());
