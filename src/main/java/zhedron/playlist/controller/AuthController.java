@@ -15,12 +15,10 @@ import zhedron.playlist.dto.responseDTO.Token;
 import zhedron.playlist.entity.RefreshToken;
 import zhedron.playlist.entity.User;
 import zhedron.playlist.exceptions.RefreshTokenNotFoundException;
-import zhedron.playlist.repository.RefreshTokenRepository;
 import zhedron.playlist.service.JwtService;
 import zhedron.playlist.service.RefreshTokenService;
 import zhedron.playlist.service.UserService;
 
-import java.util.UUID;
 
 @RestController
 public class AuthController {
