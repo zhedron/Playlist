@@ -35,6 +35,9 @@ jwt:
 secret_key:
   aes:
 
+  iv:
+
+
 logging:
   level:
     security:

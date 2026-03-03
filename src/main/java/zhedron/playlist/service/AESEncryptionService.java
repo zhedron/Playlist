@@ -18,7 +18,8 @@ import java.util.Base64;
 public class AESEncryptionService {
     @Value("${secret_key.aes}")
     private String KEY;
-    private final String IV = "1234567890";
+    @Value("${secret_key.iv}")
+    private String IV;
 
     public String encrypt(String phone) {
         SecretKeySpec secretKey = new SecretKeySpec(KEY.getBytes(), "AES");

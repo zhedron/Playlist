@@ -238,7 +238,7 @@ public class UserServiceImpl implements UserService {
             user.setPhone(aesEncryptionService.encrypt(userUpdate.getPhone()));
         }
         if (userUpdate.getIsHiddenPhone() != null) {
-            if (currentUser.getPhone() == null && userUpdate.getIsHiddenPhone()) {
+            if (user.getPhone() == null && userUpdate.getIsHiddenPhone()) {
                 throw new Exception("You can't hide phone, because your phone empty");
             }
             user.setHiddenPhone(userUpdate.getIsHiddenPhone());
