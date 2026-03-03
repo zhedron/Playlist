@@ -3,6 +3,7 @@ package zhedron.playlist.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,4 +21,12 @@ public class Playlist {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    private long duration;
+
+    private boolean isPublic;
+
+    private int counter;
+
+    private LocalDateTime createdAt;
 }

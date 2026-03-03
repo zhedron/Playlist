@@ -18,8 +18,15 @@ import java.util.Optional;
 
 @Component
 public class CustomOauth2UserService extends DefaultOAuth2UserService {
+
+    private final UserRepository userRepository;
+
+    private final ImageContentTypeFetcherService imageContentTypeFetcherService;
     @Autowired
-    private UserRepository userRepository;
+    public CustomOauth2UserService(UserRepository userRepository, ImageContentTypeFetcherService imageContentTypeFetcherService) {
+        this.userRepository = userRepository;
+        this.imageContentTypeFetcherService = imageContentTypeFetcherService;
+    }
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) {
@@ -34,22 +41,25 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
 
             attributes.put("email", email);
             attributes.put("name", oAuth2User.getAttributes().get("name"));
+            attributes.put("picture", oAuth2User.getAttributes().get("picture"));
 
             Optional<User> userFound = userRepository.findByEmail(email);
 
             if (userFound.isEmpty()) {
                 User user = new User();
 
-                if (user.getAbout() == null || user.getAbout().isEmpty()) {
-                    user.setAbout("There is no description");
-                }
+                String picture = (String) oAuth2User.getAttributes().get("picture");
+
+                String contentType = imageContentTypeFetcherService.getImageContentType(picture);
 
                 user.setName((String) attributes.get("name"));
                 user.setEmail(email);
                 user.setBlocked(false);
                 user.setCreatedAt(LocalDateTime.now());
-                user.setProvider(Provider.google);
+                user.setProvider(Provider.GOOGLE);
                 user.setRole(Role.USER);
+                user.setProfilePicture(picture.replace("=s96", "=s360"));
+                user.setContentType(contentType);
 
                 userRepository.save(user);
             }

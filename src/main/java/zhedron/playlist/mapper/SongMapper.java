@@ -1,4 +1,4 @@
-package zhedron.playlist.mappers;
+package zhedron.playlist.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;

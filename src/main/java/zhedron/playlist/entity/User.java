@@ -1,9 +1,6 @@
 package zhedron.playlist.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import zhedron.playlist.enums.Provider;
 import zhedron.playlist.enums.Role;
@@ -19,23 +16,23 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @NotBlank(message = "Name must not be empty")
-    @NotNull(message = "Name must not be null")
+    @Column(nullable = false)
     private String name;
 
     private String about;
 
-    @Email(message = "Write your email")
-    @NotNull(message = "Email must not be null")
-    @NotBlank(message = "Email must not be empty")
+    @Column(nullable = false, unique = true)
     private String email;
 
     private String password;
 
+    private String phone;
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     @Enumerated(EnumType.STRING)
-    private Role role;
+    private Role role = Role.USER;
 
     @OneToMany(mappedBy = "user")
     private List<Playlist> playlists;
@@ -44,4 +41,10 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     private Provider provider;
+
+    private String profilePicture;
+
+    private String contentType;
+
+    private boolean isHiddenPhone;
 }

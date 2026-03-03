@@ -1,4 +1,4 @@
-package zhedron.playlist.exceptions;
+package zhedron.playlist.exception;
 
 public class UserExistException extends RuntimeException {
     public UserExistException(String message) {

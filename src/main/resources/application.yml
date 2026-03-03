@@ -7,14 +7,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
+      max-file-size: 50MB
+      max-request-size: 50MB
 
 
   security:
@@ -35,3 +31,11 @@ jwt:
   secret:
     key:
   expiration: 604800000
+
+secret_key:
+  aes:
+
+logging:
+  level:
+    security:
+      TRACE

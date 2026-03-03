@@ -1,8 +1,18 @@
 package zhedron.playlist.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -11,16 +21,20 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import zhedron.playlist.dto.responseDTO.Token;
+import zhedron.playlist.dto.request.LoginRequest;
+import zhedron.playlist.dto.response.MessageResponse;
+import zhedron.playlist.dto.response.TokenResponse;
 import zhedron.playlist.entity.RefreshToken;
 import zhedron.playlist.entity.User;
-import zhedron.playlist.exceptions.RefreshTokenNotFoundException;
+import zhedron.playlist.exception.RefreshTokenNotFoundException;
+import zhedron.playlist.exception.UserNotFoundException;
 import zhedron.playlist.service.JwtService;
 import zhedron.playlist.service.RefreshTokenService;
 import zhedron.playlist.service.UserService;
 
 
-@RestController
+@RestController()
+@Tag(name = "Authorization API", description = "Authorization with login, password and get JWT token")
 public class AuthController {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
@@ -34,34 +48,61 @@ public class AuthController {
         this.refreshTokenService = refreshTokenService;
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<?> login (@RequestBody User user) {
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                user.getEmail(), user.getPassword()
-        ));
+    @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Login", description = "Login with email, password and get JWT token for authorization in others resources")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully logged ang got JWT token",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object", example = """
+                    {
+                      "accessToken": "{accessToken}",
+                      "refreshToken": "refreshToken"
+                    }"""))),
+            @ApiResponse(responseCode = "401", description = "Invalid login",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object"), examples = {
+                    @ExampleObject(
+                            name = "Error email or password",
+                            value = "{\"message\": \"Invalid email or password\"}",
+                            summary = "Email does not exist or wrong password"
+                    ),
+                    @ExampleObject(
+                            name = "Account is blocked",
+                            value = "{\"message\": \"Your account is locked\"}",
+                            summary = "The blocked user cannot log in"
+                    )
+            }))
+    })
+    public ResponseEntity<?> login (@RequestBody LoginRequest loginRequest) {
 
-        if (authentication.isAuthenticated()) {
-            User userFound = userService.findByEmail(user.getEmail());
+        String accessToken = null;
+        RefreshToken refreshToken = null;
 
-            String accessToken = null;
-            RefreshToken refreshToken = null;
+        try {
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+                    loginRequest.getEmail(), loginRequest.getPassword()
+            ));
 
-            if (userFound != null) {
-                accessToken = jwtService.generateToken(userFound.getEmail());
+            if (authentication.isAuthenticated()) {
+                User userFound = userService.findByEmail(loginRequest.getEmail());
 
-                refreshToken = refreshTokenService.generateRefreshToken(userFound.getEmail());
+                if (userFound != null) {
+                    accessToken = jwtService.generateToken(userFound.getEmail());
+
+                    refreshToken = refreshTokenService.generateRefreshToken(userFound.getEmail());
+                }
             }
-
-            Token token = new Token(accessToken, refreshToken.getRefreshToken());
-
-            return ResponseEntity.ok(token);
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
+        } catch (BadCredentialsException | UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse("Invalid email or password"));
+        } catch (LockedException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse("Your account is locked"));
         }
+
+        TokenResponse tokenResponse = new TokenResponse(accessToken, refreshToken.getRefreshToken());
+
+        return ResponseEntity.ok(tokenResponse);
     }
 
     @GetMapping("/google")
-    public ResponseEntity<Token> google() {
+    public ResponseEntity<TokenResponse> google() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
@@ -77,22 +118,29 @@ public class AuthController {
             refreshToken = refreshTokenService.generateRefreshToken(userFound.getEmail());
         }
 
-        Token token = new Token(accessToken, refreshToken.getRefreshToken());
+        TokenResponse tokenResponse = new TokenResponse(accessToken, refreshToken.getRefreshToken());
 
-        return ResponseEntity.ok(token);
+        return ResponseEntity.ok(tokenResponse);
     }
 
     @PostMapping("/refreshtoken")
-    public ResponseEntity<Token> refreshToken (@RequestBody RefreshToken refreshToken) {
+    @Operation(summary = "refresh token for access token", description = "Extend access token the expiration date")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully extend access token the expiration date",
+            content = @Content(schema = @Schema(implementation = TokenResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Not found a refresh token",
+            content = @Content(schema = @Schema(type = "object", example = "{\"message\": \"Refresh Token not found with {refreshToken}\"}")))
+    })
+    public ResponseEntity<TokenResponse> refreshToken (@RequestBody RefreshToken refreshToken) {
         return refreshTokenService.findByRefreshToken(refreshToken.getRefreshToken())
                 .map(refreshTokenService::verifyRefreshToken)
                 .map(RefreshToken::getUser)
                 .map(user -> {
                     String accessToken = jwtService.generateToken(user.getEmail());
 
-                    Token token = new Token(accessToken, refreshToken.getRefreshToken());
+                    TokenResponse tokenResponse = new TokenResponse(accessToken, refreshToken.getRefreshToken());
 
-                    return ResponseEntity.ok(token);
+                    return ResponseEntity.ok(tokenResponse);
                 })
                 .orElseThrow(() -> new RefreshTokenNotFoundException("Refresh Token not found with " + refreshToken.getRefreshToken()));
     }

@@ -1,9 +1,8 @@
 package zhedron.playlist.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import zhedron.playlist.enums.Type;
 
 import java.time.LocalDateTime;
 
@@ -15,12 +14,10 @@ public class Song {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @NotBlank(message = "Name must not be empty")
-    @NotNull(message = "Name must not be null")
+    @Column(nullable = false)
     private String artistName;
 
-    @NotBlank(message = "Album must not be empty")
-    @NotNull(message = "Album must not be null")
+    @Column(nullable = false)
     private String albumName;
 
     private long views;
@@ -29,6 +26,7 @@ public class Song {
     @JoinColumn(name = "creator_id")
     private User creator;
 
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     private String contentType;
@@ -36,4 +34,7 @@ public class Song {
     private String fileName;
 
     private int duration;
+
+    @Enumerated(EnumType.STRING)
+    private Type type;
 }

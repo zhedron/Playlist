@@ -1,4 +1,4 @@
-package zhedron.playlist.exceptions;
+package zhedron.playlist.exception;
 
 public class SongNotFoundException extends RuntimeException {
     public SongNotFoundException(String message) {

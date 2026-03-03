@@ -1,10 +1,10 @@
-package zhedron.playlist.exceptions.handlers;
+package zhedron.playlist.exception.handlers;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import zhedron.playlist.exceptions.UserNotEnoughPermissionsException;
+import zhedron.playlist.exception.UserNotEnoughPermissionsException;
 
 import java.util.HashMap;
 import java.util.Map;

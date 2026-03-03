@@ -1,4 +1,4 @@
-package zhedron.playlist.exceptions;
+package zhedron.playlist.exception;
 
 public class UserNotFoundException extends RuntimeException {
     public UserNotFoundException(String message) {
