@@ -5,7 +5,9 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "playlists")
@@ -16,7 +18,7 @@ public class Playlist {
     private long id;
 
     @ManyToMany
-    private List<Song> songs = new ArrayList<>();
+    private Set<Song> songs = new HashSet<>();
 
     @ManyToOne
     @JoinColumn(name = "user_id")

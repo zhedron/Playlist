@@ -40,8 +40,6 @@ public class PlaylistController {
     public ResponseEntity<MessageResponse> addPlayList(@PathVariable long id, @RequestParam(name = "public") boolean isPublic) {
         playlistService.addSong(id, isPublic);
 
-        System.out.println(isPublic);
-
         return ResponseEntity.ok(new MessageResponse("Playlist added"));
     }
 
