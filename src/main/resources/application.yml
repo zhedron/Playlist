@@ -6,7 +6,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
   servlet:
     multipart:
       max-file-size: 50MB
@@ -34,6 +34,7 @@ jwt:
 
 secret_key:
   aes:
+    ${SECRET_KEY}
 
 
 logging:
