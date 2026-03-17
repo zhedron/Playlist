@@ -58,7 +58,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User save(UserRequest requestUser, MultipartFile profilePicture) throws IOException {
+    public User save(UserRequest requestUser) {
         if (userRepository.existsByEmail(requestUser.getEmail())) {
             throw new UserExistException("Email already exists, use other email");
         }
@@ -66,25 +66,10 @@ public class UserServiceImpl implements UserService {
         User user = new User();
 
         if (requestUser.getAbout() == null || requestUser.getAbout().isEmpty()) {
-            requestUser.setAbout("There is no description");
+            user.setAbout("There is no description");
         }
-
-        if (profilePicture != null && !profilePicture.isEmpty()) {
-
-            String namePicture = profilePicture.getOriginalFilename();
-
-            File createdPicture = new File(PATH + namePicture);
-
-            user.setProfilePicture(namePicture);
-            user.setContentType(profilePicture.getContentType());
-
-            profilePicture.transferTo(createdPicture.toPath());
-        } else {
-            user.setProfilePicture("1646346915_1-abrakadabra-fun-p-standartnaya-avatarka-standoff-3.jpg");
-            user.setContentType("image/jpeg");
-        }
-
-    //    user.setRole(Role.ADMIN);
+        user.setProfilePicture("1646346915_1-abrakadabra-fun-p-standartnaya-avatarka-standoff-3.jpg");
+        user.setContentType("image/jpeg");
         user.setPassword(passwordEncoder.encode(requestUser.getPassword()));
         user.setCreatedAt(LocalDateTime.now());
         user.setBlocked(false);
@@ -201,7 +186,7 @@ public class UserServiceImpl implements UserService {
 
             return baos.toByteArray();
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            log.error("URL error {}", e.getMessage());
 
             return null;
         }
@@ -221,7 +206,7 @@ public class UserServiceImpl implements UserService {
             user.setEmail(userUpdate.getEmail());
         }
         if (userUpdate.getPassword() != null) {
-            if (passwordEncoder.matches(userUpdate.getPassword(), currentUser.getPassword())) {
+            if (passwordEncoder.matches(userUpdate.getPassword(), user.getPassword())) {
                 throw new Exception("You use the same password.");
             }
 
@@ -254,6 +239,22 @@ public class UserServiceImpl implements UserService {
         User user = getById(userId);
 
         user.setRole(role);
+
+        userRepository.save(user);
+    }
+
+    @Override
+    public void uploadAvatar(MultipartFile file) throws IOException {
+        User user = getCurrentUser();
+
+        String namePicture = file.getOriginalFilename();
+
+        File createdPicture = new File(PATH + namePicture);
+
+        user.setProfilePicture(namePicture);
+        user.setContentType(file.getContentType());
+
+        file.transferTo(createdPicture.toPath());
 
         userRepository.save(user);
     }

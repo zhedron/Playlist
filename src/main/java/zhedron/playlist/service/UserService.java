@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.List;
 
 public interface UserService {
-    User save(UserRequest requestUser, MultipartFile profilePicture) throws IOException;
+    User save(UserRequest requestUser);
 
     User findByEmail(String email);
 
@@ -30,4 +30,6 @@ public interface UserService {
     void updateUser(UserUpdateRequest updateUser, long userId) throws Exception;
 
     void changeRole(Role role, long userId);
+
+    void uploadAvatar(MultipartFile file) throws IOException;
 }

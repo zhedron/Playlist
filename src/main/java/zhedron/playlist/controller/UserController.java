@@ -52,9 +52,9 @@ public class UserController {
         this.aesEncryptionService = aesEncryptionService;
     }
 
-    @PostMapping(value = "/registration", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(encoding = @Encoding(name = "requestUser", contentType = MediaType.APPLICATION_JSON_VALUE)))
-    @Operation(summary = "Create a new user", description = "Add a new user with optional avatar")
+    @PostMapping(value = "/registration")
+    // @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(encoding = @Encoding(name = "requestUser", contentType = MediaType.APPLICATION_JSON_VALUE)))
+    @Operation(summary = "Create a new user", description = "Add a new user")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200",
             description = "User created successfully",
@@ -79,7 +79,7 @@ public class UserController {
                     )
             }))
     })
-    public ResponseEntity<?> save(@Valid @RequestPart UserRequest requestUser, BindingResult result, @RequestPart(required = false) MultipartFile profilePicture) throws IOException {
+    public ResponseEntity<?> save(@Valid @RequestBody UserRequest requestUser, BindingResult result) {
         if (result.hasErrors()) {
             Map<String, String> errors = new HashMap<>();
             for (FieldError error : result.getFieldErrors()) {
@@ -88,7 +88,7 @@ public class UserController {
             return ResponseEntity.badRequest().body(errors);
         }
 
-        User userSaved = userService.save(requestUser, profilePicture);
+        User userSaved = userService.save(requestUser);
 
         UserDTO userDTO = userMapper.userToUserDTO(userSaved);
 
@@ -125,39 +125,12 @@ public class UserController {
         return userService.getPlaylists(userId);
     }
 
-    /*@GetMapping("/playlists")
-    @Operation(summary = "Find artist or album songs", description = "If found artist or album, then get songs from artist or album in playlist user")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully found songs artist or album from playlist user",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                    array = @ArraySchema(schema = @Schema(implementation = PlaylistDTO.class))
-            )),
-            @ApiResponse(responseCode = "404", description = "Not found artist or album",
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object"), examples = {
-                    @ExampleObject(
-                            name = "Not found a album or artist",
-                            value = "{\"message\": \"Artist name or album name not found\"}",
-                            summary = "Find a album or artist in playlist user"
-                    ),
-                    @ExampleObject(
-                            name = "Not found a user",
-                            value = "{\"message\": \"User not found with {id}\"}",
-                            summary = "return user if authorized"
-                    )
-            }))
-    })
-    @SecurityRequirement(name = "Playlist")
-    public List<PlaylistDTO> getPlaylistsByArtistNameOrAlbumName(@RequestParam(required = false) String artistName, @RequestParam(required = false) String albumName) {
-        return userService.getPlaylistsByArtistNameOrAlbumName(artistName, albumName);
-    }*/
-
-    @DeleteMapping(value = "/playlist/delete/{playlistId}/{songId}", produces = MediaType.TEXT_PLAIN_VALUE)
+    @DeleteMapping(value = "/playlist/delete/{playlistId}/{songId}")
     @SecurityRequirement(name = "Playlist")
     @Operation(summary = "Find user playlist and song from user playlist", description = "If successfully found, then delete song from user playlist")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully deleted song from user playlist",
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Playlist deleted successfully\"}"))),
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Song from playlist deleted successfully\"}"))),
             @ApiResponse(responseCode = "404", description = "Not found playlist or song",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object"), examples = {
                     @ExampleObject(
@@ -180,7 +153,7 @@ public class UserController {
     public ResponseEntity<MessageResponse> deleteSongFromPlaylist(@PathVariable long playlistId, @PathVariable long songId) {
         userService.deleteSongFromPlaylist(playlistId, songId);
 
-        return ResponseEntity.ok(new MessageResponse("Playlist deleted successfully"));
+        return ResponseEntity.ok(new MessageResponse("Song from playlist deleted successfully"));
     }
 
     @PutMapping("/block/{id}")
@@ -276,5 +249,39 @@ public class UserController {
         userService.changeRole(role, userId);
 
         return ResponseEntity.ok(new MessageResponse("Changed role to " + role + " successfully"));
+    }
+
+    @PostMapping("/upload-avatar")
+    @SecurityRequirement(name = "Playlist")
+    @Operation(summary = "Upload avatar", description = "If image successfully uploaded, display avatar for all users")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Avatar uploaded successfully",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Avatar uploaded successfully\"}"))),
+            @ApiResponse(responseCode = "400", description = "File does not contain image",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object"), examples = {
+                    @ExampleObject(
+                            name = "Content type file",
+                            value = "{\"message\": \"Invalid image or png format\"}",
+                            summary = "File can only contain png or jpg"
+                    ),
+                    @ExampleObject(
+                            name = "File not uploaded",
+                            value = "{\"message\": \"File must not be null or empty\"}",
+                            summary = "The file must be uploaded"
+                    )
+            }))
+    })
+    public ResponseEntity<MessageResponse> uploadAvatar(@RequestPart MultipartFile file) throws IOException {
+        System.out.println(file.getContentType());
+
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().body(new MessageResponse("File must not be null or empty"));
+        } else if (!file.getContentType().equals("image/jpeg") && !file.getContentType().equals("image/png")) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Invalid image or png format"));
+        }
+
+        userService.uploadAvatar(file);
+
+        return ResponseEntity.ok(new MessageResponse("Avatar uploaded successfully"));
     }
 }

@@ -88,7 +88,7 @@ public class SongController {
             return ResponseEntity.badRequest().body(errors);
         }
         for (MultipartFile file : files) {
-            if (!(file.getContentType().equals("audio/mp4") || file.getContentType().equals("audio/mpeg")) || file.isEmpty()) {
+            if (!file.getContentType().equals("audio/mp4") && !file.getContentType().equals("audio/mpeg") || file.isEmpty()) {
                 return ResponseEntity.badRequest().body(new MessageResponse("Upload audio file."));
             }
         }

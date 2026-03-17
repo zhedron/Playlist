@@ -94,7 +94,7 @@ public class SongServiceImpl implements SongService {
 
                 song.setDuration(audioHeader.getTrackLength());
             } catch (Exception e) {
-                System.out.println("Audio file: " + e.getMessage());
+                log.error("Audio file error {}", e.getMessage());
             }
         }
 
@@ -114,7 +114,7 @@ public class SongServiceImpl implements SongService {
 
         User currentUser = userService.getCurrentUser();
 
-        if (song.getCreator().getId() != currentUser.getId() || !currentUser.getRole().equals(Role.ADMIN)) {
+        if (song.getCreator().getId() != currentUser.getId() && !currentUser.getRole().equals(Role.ADMIN)) {
             throw new UserNotEnoughPermissionsException("You do not have enough permissions to delete this song");
         }
 

@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,6 +34,9 @@ import zhedron.playlist.exception.UserNotFoundException;
 import zhedron.playlist.service.JwtService;
 import zhedron.playlist.service.RefreshTokenService;
 import zhedron.playlist.service.UserService;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 @RestController()
@@ -71,7 +77,14 @@ public class AuthController {
                     )
             }))
     })
-    public ResponseEntity<?> login (@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> login (@Valid @RequestBody LoginRequest loginRequest, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put("error", error.getDefaultMessage());
+            }
+            return ResponseEntity.badRequest().body(errors);
+        }
 
         String accessToken = null;
         RefreshToken refreshToken = null;
