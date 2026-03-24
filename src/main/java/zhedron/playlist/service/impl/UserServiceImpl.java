@@ -229,6 +229,8 @@ public class UserServiceImpl implements UserService {
             user.setHiddenPhone(userUpdate.getIsHiddenPhone());
         }
 
+        user.setUpdatedAt(LocalDateTime.now());
+
         log.info("Updated user.");
 
         userRepository.save(user);

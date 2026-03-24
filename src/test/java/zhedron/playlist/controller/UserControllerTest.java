@@ -108,7 +108,7 @@ public class UserControllerTest {
                 user.getRole(), null, user.isBlocked(),
                 user.getProvider(), user.getName(), user.getAbout(),
                 user.getProfilePicture(), user.getContentType(), user.getPhone(),
-                user.isHiddenPhone());
+                user.isHiddenPhone(), user.getUpdatedAt());
     }
 
     @Test

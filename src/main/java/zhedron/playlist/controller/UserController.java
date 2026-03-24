@@ -272,8 +272,6 @@ public class UserController {
             }))
     })
     public ResponseEntity<MessageResponse> uploadAvatar(@RequestPart MultipartFile file) throws IOException {
-        System.out.println(file.getContentType());
-
         if (file == null || file.isEmpty()) {
             return ResponseEntity.badRequest().body(new MessageResponse("File must not be null or empty"));
         } else if (!file.getContentType().equals("image/jpeg") && !file.getContentType().equals("image/png")) {

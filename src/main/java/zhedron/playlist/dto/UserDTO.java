@@ -11,11 +11,11 @@ public record UserDTO(long id, String email, LocalDateTime createdAt,
                       Role role, List<PlaylistDTO> playlists, boolean blocked, Provider provider,
                       String name, String about, String profilePicture,
                       String contentType, String phone,
-                      boolean isHiddenPhone) {
+                      boolean isHiddenPhone, LocalDateTime updatedAt) {
     public UserDTO getByPhone(String phone) {
         return new UserDTO(id, email, createdAt, role,
                 playlists, blocked, provider,
                 name, about, profilePicture,
-                contentType, phone, isHiddenPhone);
+                contentType, phone, isHiddenPhone, updatedAt);
     }
 }
