@@ -35,9 +35,3 @@ jwt:
 secret_key:
   aes:
     ${SECRET_KEY}
-
-
-logging:
-  level:
-    security:
-      TRACE
