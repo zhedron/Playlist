@@ -56,7 +56,6 @@ public class UserController {
     }
 
     @PostMapping(value = "/registration")
-    // @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(encoding = @Encoding(name = "requestUser", contentType = MediaType.APPLICATION_JSON_VALUE)))
     @Operation(summary = "Create a new user", description = "Add a new user")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200",
