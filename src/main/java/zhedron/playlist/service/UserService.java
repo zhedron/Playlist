@@ -1,5 +1,6 @@
 package zhedron.playlist.service;
 
+import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 import zhedron.playlist.dto.PlaylistDTO;
 import zhedron.playlist.dto.request.UserRequest;
@@ -8,6 +9,7 @@ import zhedron.playlist.entity.User;
 import zhedron.playlist.enums.Role;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.List;
 
 public interface UserService {
@@ -25,7 +27,7 @@ public interface UserService {
 
     void blockUser(long userId);
 
-    byte[] getProfilePicture(long id);
+    Resource getProfilePicture(long id) throws MalformedURLException;
 
     void updateUser(UserUpdateRequest updateUser, long userId) throws Exception;
 

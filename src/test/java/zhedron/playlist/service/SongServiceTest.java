@@ -3,6 +3,8 @@ package zhedron.playlist.service;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.*;
 
 import org.springframework.mock.web.MockMultipartFile;
@@ -21,9 +23,10 @@ import zhedron.playlist.repository.PlaylistRepository;
 import zhedron.playlist.repository.SongRepository;
 import zhedron.playlist.service.impl.SongServiceImpl;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -103,11 +106,13 @@ class SongServiceTest {
 
         when(userService.getCurrentUser()).thenReturn(user);
 
-        File file = new File("song/All The Things She Said.mp3");
+        Path path = Paths.get("song/All The Things She Said.mp3");
 
-        byte[] bytes = Files.readAllBytes(file.toPath());
+        byte[] bytes = Files.readAllBytes(path);
 
-        MultipartFile multipartFile = new MockMultipartFile("file", file.getName(), "audio/mpeg", bytes);
+        Resource resource = new UrlResource(path.toUri());
+
+        MultipartFile multipartFile = new MockMultipartFile("file", resource.getFilename(), "audio/mpeg", bytes);
 
         List<MultipartFile> multipartFiles = new ArrayList<>();
         multipartFiles.add(multipartFile);

@@ -2,6 +2,8 @@ package zhedron.playlist.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,13 +25,10 @@ import zhedron.playlist.repository.UserRepository;
 import zhedron.playlist.service.AESEncryptionService;
 import zhedron.playlist.service.UserService;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
+
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLConnection;
+import java.net.MalformedURLException;
+import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -164,32 +163,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public byte[] getProfilePicture(long id) {
+    public Resource getProfilePicture(long id) throws MalformedURLException {
         User user = getById(id);
 
         UserDTO userDTO = userMapper.userToUserDTO(user);
 
-        try {
-            URL url = new URL(userDTO.profilePicture());
-
-            URLConnection conn = url.openConnection();
-
-            String contentType = userDTO.contentType();
-
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-            BufferedImage image = ImageIO.read(conn.getInputStream());
-
-            ImageIO.write(image, contentType.substring("image/".length()), baos);
-
-            baos.close();
-
-            return baos.toByteArray();
-        } catch (IOException e) {
-            log.error("URL error {}", e.getMessage());
-
-            return null;
-        }
+        return new UrlResource(userDTO.profilePicture());
     }
 
     @Override
@@ -246,17 +225,36 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void uploadAvatar(MultipartFile file) throws IOException {
+    public void uploadAvatar(MultipartFile file) {
         User user = getCurrentUser();
 
-        String namePicture = file.getOriginalFilename();
+        String profilePicture = user.getProfilePicture();
 
-        File createdPicture = new File(PATH + namePicture);
+        String fileName = profilePicture.substring(profilePicture.indexOf("_") + 1);
+
+        if (!fileName.equals(file.getOriginalFilename())) {
+            Path path = Paths.get(PATH).resolve(user.getProfilePicture()).normalize();
+
+            try {
+                boolean deleted = Files.deleteIfExists(path);
+                if (deleted) log.info("File deleted successfully");
+            } catch (IOException e) {
+                throw new RuntimeException("Cannot delete file.", e);
+            }
+        }
+
+        String namePicture = user.getId() + "_" + file.getOriginalFilename();
+
+        Path path = Paths.get(PATH).resolve(namePicture).normalize();
 
         user.setProfilePicture(namePicture);
         user.setContentType(file.getContentType());
 
-        file.transferTo(createdPicture.toPath());
+        try {
+            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException("Error while uploading avatar", e);
+        }
 
         userRepository.save(user);
     }

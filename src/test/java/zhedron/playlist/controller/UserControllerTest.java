@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -34,8 +36,9 @@ import zhedron.playlist.repository.UserRepository;
 import zhedron.playlist.service.*;
 import zhedron.playlist.service.impl.UserDetailsImpl;
 
-import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -259,11 +262,13 @@ public class UserControllerTest {
     @Test
     @WithMockUser(username = "test@test.com", password = "test", authorities = "USER")
     public void uploadAvatar_shouldReturnUploadedAvatar() throws Exception {
-        File file = new File("profile_image/Без названия (6).jpg");
+        Path path = Paths.get("profile_image/Без названия (6).jpg");
 
-        byte[] bytes = Files.readAllBytes(file.toPath());
+        Resource resource = new UrlResource(path.toUri());
 
-        MockMultipartFile multipartFile = new MockMultipartFile("file", file.getName(), MediaType.IMAGE_JPEG_VALUE, bytes);
+        byte[] bytes = Files.readAllBytes(path);
+
+        MockMultipartFile multipartFile = new MockMultipartFile("file", resource.getFilename(), MediaType.IMAGE_JPEG_VALUE, bytes);
         doNothing().when(userService).uploadAvatar(multipartFile);
 
         mockMvc.perform(multipart("/user/upload-avatar").file(multipartFile)
@@ -277,18 +282,19 @@ public class UserControllerTest {
     @Test
     @WithMockUser(username = "test@test.com", password = "test", authorities = "USER")
     public void uploadAvatar_shouldReturnContentType() throws Exception {
+        Path path = Paths.get("song/All The Things She Said.mp3");
 
-        File file = new File("song/All The Things She Said.mp3");
+        byte[] bytes = Files.readAllBytes(path);
 
-        byte[] bytes = Files.readAllBytes(file.toPath());
+        Resource resource = new UrlResource(path.toUri());
 
-        MockMultipartFile multipartFile = new MockMultipartFile("file", file.getName(), "audio/mpeg", bytes);
+        MockMultipartFile multipartFile = new MockMultipartFile("file", resource.getFilename(), "audio/mpeg", bytes);
 
 
         mockMvc.perform(multipart("/user/upload-avatar").file(multipartFile)
                 .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Invalid image or png format"));
+                .andExpect(jsonPath("$.message").value("Invalid image jpg or png format"));
     }
 
     @Test

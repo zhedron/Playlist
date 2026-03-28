@@ -6,6 +6,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
@@ -31,8 +33,9 @@ import zhedron.playlist.service.*;
 import zhedron.playlist.entity.Song;
 import zhedron.playlist.service.impl.UserDetailsImpl;
 
-import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -120,11 +123,13 @@ class SongControllerTest {
         songRequest.setArtistName("test_artist");
         songRequest.setAlbumName("test_album");
 
-        File file = new File("song/All The Things She Said.mp3");
+        Path path = Paths.get("song/All The Things She Said.mp3");
 
-        byte[] bytes = Files.readAllBytes(file.toPath());
+        byte[] bytes = Files.readAllBytes(path);
 
-        MockMultipartFile multipartFile = new MockMultipartFile("files", file.getName(), "audio/mpeg", bytes);
+        Resource resource = new UrlResource(path.toUri());
+
+        MockMultipartFile multipartFile = new MockMultipartFile("files", resource.getFilename(), "audio/mpeg", bytes);
 
         List<MultipartFile> files = new ArrayList<>();
         files.add(multipartFile);
@@ -166,11 +171,13 @@ class SongControllerTest {
         songRequest.setArtistName("test_artist");
         songRequest.setAlbumName("test_album");
 
-        File file = new File("profile_image/Без названия (6).jpg");
+        Path path = Paths.get("song/All The Things She Said.mp3");
 
-        byte[] bytes = Files.readAllBytes(file.toPath());
+        byte[] bytes = Files.readAllBytes(path);
 
-        MockMultipartFile multipartFile = new MockMultipartFile("files", file.getName(), MediaType.IMAGE_JPEG_VALUE, bytes);
+        Resource resource = new UrlResource(path.toUri());
+
+        MockMultipartFile multipartFile = new MockMultipartFile("files", resource.getFilename(), MediaType.IMAGE_JPEG_VALUE, bytes);
 
         String json = objectMapper.writeValueAsString(songRequest);
 

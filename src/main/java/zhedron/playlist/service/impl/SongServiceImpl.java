@@ -26,8 +26,11 @@ import zhedron.playlist.repository.SongRepository;
 import zhedron.playlist.service.SongService;
 import zhedron.playlist.service.UserService;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -53,28 +56,26 @@ public class SongServiceImpl implements SongService {
 
     @Override
     public List<SongDTO> save(SongRequest requestSong, List<MultipartFile> files) throws IOException {
-        File file = new File(FILEPATH);
+        Path path = Paths.get(FILEPATH);
 
         List<Song> songList = new ArrayList<>();
 
-        if (!file.exists()) {
-            file.mkdir();
+        if (Files.notExists(path)) {
+            Files.createDirectories(path);
         }
 
         for (MultipartFile multipartFile : files) {
-            Song song = new Song();
+            User currentUser = userService.getCurrentUser();
 
             Type type = files.size() > 1 ? Type.ALBUM : Type.SINGLE;
 
-            String songName = multipartFile.getOriginalFilename();
+            String songName = currentUser.getId() + "_" + requestSong.getArtistName() + "_" + requestSong.getAlbumName() + "_" + multipartFile.getOriginalFilename();
 
-            String path = FILEPATH + songName;
+            Path createFile = Paths.get(FILEPATH).resolve(songName).normalize();
 
-            File createFile = new File(path);
+            Files.copy(multipartFile.getInputStream(), createFile, StandardCopyOption.REPLACE_EXISTING);
 
-            User currentUser = userService.getCurrentUser();
-
-            multipartFile.transferTo(createFile.toPath());
+            Song song = new Song();
 
             song.setCreator(currentUser);
             song.setContentType(multipartFile.getContentType());
@@ -89,7 +90,7 @@ public class SongServiceImpl implements SongService {
             log.info("Saved song: {}", song);
 
             try {
-                AudioFile audioFile = AudioFileIO.read(createFile);
+                AudioFile audioFile = AudioFileIO.read(createFile.toFile());
                 AudioHeader audioHeader = audioFile.getAudioHeader();
 
                 song.setDuration(audioHeader.getTrackLength());

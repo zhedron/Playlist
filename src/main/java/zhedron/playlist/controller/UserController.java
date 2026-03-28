@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -27,9 +29,10 @@ import zhedron.playlist.mapper.UserMapper;
 import zhedron.playlist.service.AESEncryptionService;
 import zhedron.playlist.service.UserService;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.net.MalformedURLException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -183,19 +186,19 @@ public class UserController {
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
             schema = @Schema(type = "object", example = "{\"error\": \"User not found with {id}\"}")))
     })
-    public ResponseEntity<byte[]> getUserPicture(@PathVariable long id) throws IOException {
+    public ResponseEntity<Resource> getUserPicture(@PathVariable long id) throws MalformedURLException {
         UserDTO userDTO = getUserById(id);
 
         if (userDTO.provider().equals(Provider.GOOGLE)) {
-            byte[] imageBytes = userService.getProfilePicture(id);
+            Resource resource = userService.getProfilePicture(id);
 
-            return ResponseEntity.ok().contentType(MediaType.parseMediaType(userDTO.contentType())).body(imageBytes);
+            return ResponseEntity.ok().contentType(MediaType.parseMediaType(userDTO.contentType())).body(resource);
         } else {
-            File file = new File(PICTURE_PATH + userDTO.profilePicture());
+            Path path = Paths.get(PICTURE_PATH).resolve(userDTO.profilePicture()).normalize();
 
-            byte[] imageBytes = Files.readAllBytes(file.toPath());
+            Resource resource = new UrlResource(path.toUri());
 
-            return ResponseEntity.ok().contentType(MediaType.parseMediaType(userDTO.contentType())).body(imageBytes);
+            return ResponseEntity.ok().contentType(MediaType.parseMediaType(userDTO.contentType())).body(resource);
         }
     }
 
@@ -251,7 +254,7 @@ public class UserController {
         return ResponseEntity.ok(new MessageResponse("Changed role to " + role + " successfully"));
     }
 
-    @PostMapping("/upload-avatar")
+    @PostMapping(value = "/upload-avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @SecurityRequirement(name = "Playlist")
     @Operation(summary = "Upload avatar", description = "If image successfully uploaded, display avatar for all users")
     @ApiResponses(value = {
@@ -275,7 +278,7 @@ public class UserController {
         if (file == null || file.isEmpty()) {
             return ResponseEntity.badRequest().body(new MessageResponse("File must not be null or empty"));
         } else if (!file.getContentType().equals("image/jpeg") && !file.getContentType().equals("image/png")) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Invalid image or png format"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Invalid image jpg or png format"));
         }
 
         userService.uploadAvatar(file);

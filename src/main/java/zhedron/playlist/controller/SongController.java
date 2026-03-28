@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -23,9 +25,9 @@ import zhedron.playlist.mapper.SongMapper;
 import zhedron.playlist.repository.SongRepository;
 import zhedron.playlist.service.SongService;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -154,11 +156,11 @@ public class SongController {
         Song song = songService.getSongById(id);
 
         try {
-            File path = new File(PATH + song.getFileName());
+            Path path = Paths.get(PATH).resolve(song.getFileName()).normalize();
 
-            byte[] file = Files.readAllBytes(path.toPath());
+            Resource resource = new UrlResource(path.toUri());
 
-            return ResponseEntity.ok().contentType(MediaType.parseMediaType(song.getContentType())).body(file);
+            return ResponseEntity.ok().contentType(MediaType.parseMediaType(song.getContentType())).body(resource);
         } catch (IOException e) {
             return ResponseEntity.badRequest().body(new MessageResponse("Cannot read file."));
         }

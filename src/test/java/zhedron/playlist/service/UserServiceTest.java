@@ -5,6 +5,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.Authentication;
@@ -29,9 +31,10 @@ import zhedron.playlist.repository.PlaylistRepository;
 import zhedron.playlist.repository.UserRepository;
 import zhedron.playlist.service.impl.UserServiceImpl;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -95,6 +98,7 @@ class UserServiceTest {
 
         user.setId(1);
         user.setEmail("test@test.com");
+        user.setProfilePicture("test.jpg");
 
         when(auth.getName()).thenReturn(user.getEmail());
         when(securityContext.getAuthentication()).thenReturn(auth);
@@ -102,15 +106,17 @@ class UserServiceTest {
 
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
 
-        File file = new File("profile_image/Без названия (6).jpg");
+        Path path = Paths.get("profile_image/Без названия (6).jpg");
 
-        byte[] fileBytes = Files.readAllBytes(file.toPath());
+        Resource resource = new UrlResource(path.toUri());
 
-        MultipartFile multipartFile = new MockMultipartFile("file", file.getName(), MediaType.IMAGE_JPEG_VALUE, fileBytes);
+        byte[] fileBytes = Files.readAllBytes(path);
+
+        MultipartFile multipartFile = new MockMultipartFile("file", resource.getFilename(), MediaType.IMAGE_JPEG_VALUE, fileBytes);
 
         userService.uploadAvatar(multipartFile);
 
-        assertEquals(file.getName(), multipartFile.getOriginalFilename());
+        assertEquals(resource.getFilename(), multipartFile.getOriginalFilename());
     }
 
     @Test
