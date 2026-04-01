@@ -142,7 +142,7 @@ public class UserServiceImpl implements UserService {
 
         String email = auth.getName();
 
-        User user = findByEmail(email);
+        User user = userRepository.findByEmail(email).orElseThrow(UserUnauthorizedException::new);
 
         if (user.isBlocked()) {
             throw new UserBlockedException("User " + user.getEmail() + " is blocked");
