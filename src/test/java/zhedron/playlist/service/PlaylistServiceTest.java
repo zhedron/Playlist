@@ -112,7 +112,7 @@ public class PlaylistServiceTest {
 
         user.setPlaylists(playlists);
 
-        SongDTO songDTO = new SongDTO(song.getId(), song.getArtistName(), song.getAlbumName(), 0, null, null, null, 0, null);
+        SongDTO songDTO = new SongDTO(song.getId(), song.getArtistName(), song.getAlbumName(), 0, null, null, null, 0, null, null, null);
 
         Set<SongDTO> songs = new HashSet<>();
         songs.add(songDTO);

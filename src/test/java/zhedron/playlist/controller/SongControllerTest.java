@@ -147,12 +147,12 @@ class SongControllerTest {
         song.setFileName(multipartFile.getOriginalFilename());
         song.setContentType(multipartFile.getContentType());
 
-        SongDTO songDTO = new SongDTO(song.getId(), song.getArtistName(), song.getAlbumName(), song.getViews(), song.getCreatedAt(), song.getContentType(), song.getFileName(), song.getDuration(), song.getType());
+        SongDTO songDTO = new SongDTO(song.getId(), song.getArtistName(), song.getAlbumName(), song.getViews(), song.getCreatedAt(), song.getContentType(), song.getFileName(), song.getDuration(), song.getType(), null, null);
 
         List<SongDTO> songsDTO = new ArrayList<>();
         songsDTO.add(songDTO);
 
-        when(songService.save(songRequest, files)).thenReturn(songsDTO);
+        when(songService.save(songRequest, files, null)).thenReturn(songsDTO);
 
         mockMvc.perform(multipart("/song/create")
                 .file(multipartFile)
@@ -162,7 +162,7 @@ class SongControllerTest {
                 .andExpect(jsonPath("$[0].artistName").value("test_artist"))
                 .andExpect(jsonPath("$[0].albumName").value("test_album"));
 
-        verify(songService).save(songRequest, files);
+        verify(songService).save(songRequest, files, null);
     }
 
     @Test
@@ -257,10 +257,10 @@ class SongControllerTest {
         song4.setId(4);
         song4.setViews(1);
 
-        SongDTO songDTO = new SongDTO(song.getId(), song.getArtistName(), song.getAlbumName(), song.getViews(), song.getCreatedAt(), song.getContentType(), song.getFileName(), song.getDuration(), song.getType());
-        SongDTO songDTO2 = new SongDTO(song2.getId(), song2.getArtistName(), song2.getAlbumName(), song2.getViews(), song2.getCreatedAt(), song2.getContentType(), song2.getFileName(), song2.getDuration(), song2.getType());
-        SongDTO songDTO3 = new SongDTO(song3.getId(), song3.getArtistName(), song3.getAlbumName(), song3.getViews(), song3.getCreatedAt(), song3.getContentType(), song3.getFileName(), song3.getDuration(), song3.getType());
-        SongDTO songDTO4 = new SongDTO(song4.getId(), song4.getArtistName(), song4.getAlbumName(), song4.getViews(), song4.getCreatedAt(), song4.getContentType(), song4.getFileName(), song4.getDuration(), song4.getType());
+        SongDTO songDTO = new SongDTO(song.getId(), song.getArtistName(), song.getAlbumName(), song.getViews(), song.getCreatedAt(), song.getContentType(), song.getFileName(), song.getDuration(), song.getType(), null, null);
+        SongDTO songDTO2 = new SongDTO(song2.getId(), song2.getArtistName(), song2.getAlbumName(), song2.getViews(), song2.getCreatedAt(), song2.getContentType(), song2.getFileName(), song2.getDuration(), song2.getType(), null, null);
+        SongDTO songDTO3 = new SongDTO(song3.getId(), song3.getArtistName(), song3.getAlbumName(), song3.getViews(), song3.getCreatedAt(), song3.getContentType(), song3.getFileName(), song3.getDuration(), song3.getType(), null, null);
+        SongDTO songDTO4 = new SongDTO(song4.getId(), song4.getArtistName(), song4.getAlbumName(), song4.getViews(), song4.getCreatedAt(), song4.getContentType(), song4.getFileName(), song4.getDuration(), song4.getType(), null, null);
 
         List<SongDTO> songsDTO = new ArrayList<>();
         songsDTO.add(songDTO);
@@ -297,9 +297,9 @@ class SongControllerTest {
 
         Page<Song> songPage = new PageImpl<>(songs);
 
-        SongDTO songDTO = new SongDTO(song.getId(), song.getArtistName(), song.getAlbumName(), song.getViews(), song.getCreatedAt(), song.getContentType(), song.getFileName(), song.getDuration(), song.getType());
-        SongDTO songDTO2 = new SongDTO(song2.getId(), song2.getArtistName(), song2.getAlbumName(), song2.getViews(), song2.getCreatedAt(), song2.getContentType(), song2.getFileName(), song2.getDuration(), song2.getType());
-        SongDTO songDTO3 = new SongDTO(song3.getId(), song3.getArtistName(), song3.getAlbumName(), song3.getViews(), song3.getCreatedAt(), song3.getContentType(), song3.getFileName(), song3.getDuration(), song3.getType());
+        SongDTO songDTO = new SongDTO(song.getId(), song.getArtistName(), song.getAlbumName(), song.getViews(), song.getCreatedAt(), song.getContentType(), song.getFileName(), song.getDuration(), song.getType(), null, null);
+        SongDTO songDTO2 = new SongDTO(song2.getId(), song2.getArtistName(), song2.getAlbumName(), song2.getViews(), song2.getCreatedAt(), song2.getContentType(), song2.getFileName(), song2.getDuration(), song2.getType(), null, null);
+        SongDTO songDTO3 = new SongDTO(song3.getId(), song3.getArtistName(), song3.getAlbumName(), song3.getViews(), song3.getCreatedAt(), song3.getContentType(), song3.getFileName(), song3.getDuration(), song3.getType(), null, null);
 
         List<SongDTO> songsDTO = new ArrayList<>();
         songsDTO.add(songDTO);

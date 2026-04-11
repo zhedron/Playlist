@@ -397,9 +397,9 @@ public class UserControllerTest {
 
         user.setPlaylists(playlists);
 
-        SongDTO songDTO = new SongDTO(song.getId(), song.getArtistName(), song.getAlbumName(), song.getViews(), song.getCreatedAt(), null, null, 0, song.getType());
-        SongDTO songDTO2 = new SongDTO(song2.getId(), song2.getArtistName(), song2.getAlbumName(), song2.getViews(), song2.getCreatedAt(), null, null, 0, song2.getType());
-        SongDTO songDTO3 = new SongDTO(song3.getId(), song3.getArtistName(), song3.getAlbumName(), song3.getViews(), song3.getCreatedAt(), null, null, 0, song3.getType());
+        SongDTO songDTO = new SongDTO(song.getId(), song.getArtistName(), song.getAlbumName(), song.getViews(), song.getCreatedAt(), null, null, 0, song.getType(), null, null);
+        SongDTO songDTO2 = new SongDTO(song2.getId(), song2.getArtistName(), song2.getAlbumName(), song2.getViews(), song2.getCreatedAt(), null, null, 0, song2.getType(), null, null);
+        SongDTO songDTO3 = new SongDTO(song3.getId(), song3.getArtistName(), song3.getAlbumName(), song3.getViews(), song3.getCreatedAt(), null, null, 0, song3.getType(), null, null);
 
         Set<SongDTO> songDTOs = new HashSet<>();
         songDTOs.add(songDTO);

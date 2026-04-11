@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.List;
 
 public interface SongService {
-    List<SongDTO> save(SongRequest requestSong, List<MultipartFile> files) throws IOException;
+    List<SongDTO> save(SongRequest requestSong, List<MultipartFile> files, MultipartFile image) throws IOException;
 
     Song getSongById(long id);
 
@@ -19,4 +19,8 @@ public interface SongService {
     List<SongDTO> getTopSongs();
 
     PaginatedResponse findAllPerWeek(int page, int size);
+
+    List<SongDTO> findByArtistNameOrAlbumName(String artistName, String albumName);
+
+    List<SongDTO> findAllByMyUploads();
 }

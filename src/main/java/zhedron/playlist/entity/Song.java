@@ -31,7 +31,11 @@ public class Song {
 
     private String contentType;
 
+    private String contentTypeImage;
+
     private String fileName;
+
+    private String imagePath;
 
     private int duration;
 

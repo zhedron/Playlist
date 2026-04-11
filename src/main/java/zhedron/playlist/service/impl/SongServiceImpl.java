@@ -47,6 +47,8 @@ public class SongServiceImpl implements SongService {
 
     private final String FILEPATH = "song/";
 
+    private final String FILEPATH_IMAGE = "song/image/";
+
     public SongServiceImpl(SongRepository songRepository, UserService userService, PlaylistRepository playlistRepository, SongMapper songMapper) {
         this.songRepository = songRepository;
         this.userService = userService;
@@ -55,13 +57,16 @@ public class SongServiceImpl implements SongService {
     }
 
     @Override
-    public List<SongDTO> save(SongRequest requestSong, List<MultipartFile> files) throws IOException {
+    public List<SongDTO> save(SongRequest requestSong, List<MultipartFile> files, MultipartFile image) throws IOException {
         Path path = Paths.get(FILEPATH);
+        Path imagePath = Paths.get(FILEPATH_IMAGE);
 
         List<Song> songList = new ArrayList<>();
 
         if (Files.notExists(path)) {
             Files.createDirectories(path);
+        } else if (Files.notExists(imagePath)) {
+            Files.createDirectories(imagePath);
         }
 
         for (MultipartFile multipartFile : files) {
@@ -75,11 +80,19 @@ public class SongServiceImpl implements SongService {
 
             Files.copy(multipartFile.getInputStream(), createFile, StandardCopyOption.REPLACE_EXISTING);
 
+            String imageName = currentUser.getId() + "_" + requestSong.getAlbumName() + "_" + image.getOriginalFilename();
+
+            Path createImage = Paths.get(FILEPATH_IMAGE).resolve(imageName).normalize();
+
+            Files.copy(image.getInputStream(), createImage, StandardCopyOption.REPLACE_EXISTING);
+
             Song song = new Song();
 
             song.setCreator(currentUser);
             song.setContentType(multipartFile.getContentType());
+            song.setContentTypeImage(image.getContentType());
             song.setFileName(songName);
+            song.setImagePath(imageName);
             song.setCreatedAt(LocalDateTime.now());
             song.setAlbumName(requestSong.getAlbumName());
             song.setArtistName(requestSong.getArtistName());
@@ -156,5 +169,21 @@ public class SongServiceImpl implements SongService {
                 songPage.hasNext(),
                 songPage.hasPrevious()
         );
+    }
+
+    @Override
+    public List<SongDTO> findByArtistNameOrAlbumName(String artistName, String albumName) {
+        List<Song> songs = songRepository.findByArtistNameOrAlbumName(artistName, albumName);
+
+        return songMapper.songToSongDTOList(songs);
+    }
+
+    @Override
+    public List<SongDTO> findAllByMyUploads() {
+        User currentUser = userService.getCurrentUser();
+
+        List<Song> songs = songRepository.findAllByCreator(currentUser);
+
+        return songMapper.songToSongDTOList(songs);
     }
 }

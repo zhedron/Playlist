@@ -32,7 +32,7 @@ public class SecurityConfig {
 
     private final String[] ALL = {"/login",
             "/user/registration", "/user/{userId}", "/user/playlists/{userId}", "/user/update/{userId}", "/user/picture/{userId}",
-            "/song/top", "/song/file/{songId}", "/song/perweek", "/song/{songId}",
+            "/song/top", "/song/file/{songId}", "/song/perweek", "/song/{songId}", "/song/search", "/song/image/{songId}",
             "/playlist/search",
             "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"};
 

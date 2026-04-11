@@ -89,7 +89,7 @@ class SongServiceTest {
         when(songRepository.findAll(any(Pageable.class)))
                 .thenReturn(page);
 
-        SongDTO dto = new SongDTO(1, "test_artist", "test_album", 0, LocalDateTime.now(), null, null, 0, Type.SINGLE);
+        SongDTO dto = new SongDTO(1, "test_artist", "test_album", 0, LocalDateTime.now(), null, null, 0, Type.SINGLE, null, null);
 
         when(songMapper.songToSongDTO(song)).thenReturn(dto);
 
@@ -134,7 +134,7 @@ class SongServiceTest {
         List<Song> songList = new ArrayList<>();
         songList.add(song);
 
-        SongDTO songDTO = new SongDTO(song.getId(), song.getArtistName(), song.getAlbumName(), song.getViews(), song.getCreatedAt(), song.getContentType(), song.getFileName(), song.getDuration(), song.getType());
+        SongDTO songDTO = new SongDTO(song.getId(), song.getArtistName(), song.getAlbumName(), song.getViews(), song.getCreatedAt(), song.getContentType(), song.getFileName(), song.getDuration(), song.getType(), null, null);
 
         List<SongDTO> songDTOList = new ArrayList<>();
         songDTOList.add(songDTO);
@@ -142,7 +142,7 @@ class SongServiceTest {
         when(songRepository.saveAll(any())).thenReturn(songList);
         when(songMapper.songToSongDTOList(any())).thenReturn(songDTOList);
 
-        List<SongDTO> result = songService.save(songRequest, multipartFiles);
+        List<SongDTO> result = songService.save(songRequest, multipartFiles, null);
 
         assertNotNull(result);
 
@@ -235,7 +235,7 @@ class SongServiceTest {
         when(songMapper.songToSongDTOList(anyList())).thenAnswer(i -> {
             List<Song> songs = i.getArgument(0);
 
-            return songs.stream().map(s -> new SongDTO(s.getId(), null, null, s.getViews(), null, null, null, 0, null)).collect(Collectors.toList());
+            return songs.stream().map(s -> new SongDTO(s.getId(), null, null, s.getViews(), null, null, null, 0, null, null, null)).collect(Collectors.toList());
         });
 
         List<SongDTO> result = songService.getTopSongs();

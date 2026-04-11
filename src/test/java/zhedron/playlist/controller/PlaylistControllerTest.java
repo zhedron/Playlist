@@ -114,7 +114,7 @@ public class PlaylistControllerTest {
         playlist.setPublic(true);
         playlist.setSongs(songs);
 
-        SongDTO songDTO = new SongDTO(song.getId(), song.getArtistName(), song.getAlbumName(), song.getViews(), song.getCreatedAt(), null, null, song.getDuration(), song.getType());
+        SongDTO songDTO = new SongDTO(song.getId(), song.getArtistName(), song.getAlbumName(), song.getViews(), song.getCreatedAt(), null, null, song.getDuration(), song.getType(), null, null);
 
         Set<SongDTO> songsDTO = new HashSet<>();
         songsDTO.add(songDTO);

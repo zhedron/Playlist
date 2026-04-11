@@ -41,6 +41,7 @@ public class SongController {
     private final SongRepository songRepository;
 
     private final String PATH = "song/";
+    private final String IMAGEPATH = "song/image/";
 
     @Autowired
     public SongController(SongService songService, SongMapper songMapper, SongRepository songRepository) {
@@ -80,7 +81,7 @@ public class SongController {
                     )
             }))
     })
-    public ResponseEntity<?> createSong(@Valid @RequestPart SongRequest requestSong, BindingResult result, @RequestPart List<MultipartFile> files) throws IOException {
+    public ResponseEntity<?> createSong(@Valid @RequestPart SongRequest requestSong, BindingResult result, @RequestPart List<MultipartFile> files, @RequestPart MultipartFile image) throws IOException {
         if (result.hasErrors()) {
             Map<String, String> errors = new HashMap<>();
 
@@ -94,8 +95,11 @@ public class SongController {
                 return ResponseEntity.badRequest().body(new MessageResponse("Upload audio file."));
             }
         }
+        if (!image.getContentType().equals("image/jpeg") && !image.getContentType().equals("image/png")) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Upload image file."));
+        }
 
-        return ResponseEntity.ok(songService.save(requestSong, files));
+        return ResponseEntity.ok(songService.save(requestSong, files, image));
     }
 
     @DeleteMapping("/delete/{id}")
@@ -174,5 +178,35 @@ public class SongController {
     })
     public ResponseEntity<PaginatedResponse> findAllPerWeek(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(songService.findAllPerWeek(page, size));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<SongDTO>> findAllByArtistNameOrAlbumName(@RequestParam(required = false) String artistName, @RequestParam(required = false) String albumName) {
+        List<SongDTO> songs = songService.findByArtistNameOrAlbumName(artistName, albumName);
+
+        return ResponseEntity.ok().body(songs);
+    }
+
+    @GetMapping("/my-uploads")
+    public ResponseEntity<List<SongDTO>> findAllByMyUploads() {
+        return ResponseEntity.ok().body(songService.findAllByMyUploads());
+    }
+
+    @GetMapping("/image/{id}")
+    public ResponseEntity<?> getImageBySongId(@PathVariable long id) {
+        Song song = songService.getSongById(id);
+
+        if (song != null) {
+            Path path = Paths.get(IMAGEPATH).resolve(song.getImagePath()).normalize();
+
+            try {
+                Resource resource = new UrlResource(path.toUri());
+
+                return ResponseEntity.ok().contentType(MediaType.parseMediaType(song.getContentTypeImage())).body(resource);
+            } catch (IOException e) {
+                return ResponseEntity.badRequest().body(new MessageResponse("Error loading image"));
+            }
+        }
+        return ResponseEntity.notFound().build();
     }
 }

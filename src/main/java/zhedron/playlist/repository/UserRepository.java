@@ -2,7 +2,6 @@ package zhedron.playlist.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import zhedron.playlist.entity.Playlist;
 import zhedron.playlist.entity.User;
 
@@ -16,10 +15,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT p from User u JOIN u.playlists p WHERE u.id = :userId")
     List<Playlist> findByUserId(long userId);
-
+/*
     @Query("SELECT p from User u JOIN u.playlists p JOIN p.songs s WHERE u.id = :userId AND (s.artistName = :artistName OR s.albumName = :albumName)")
     List<Playlist> findPlaylistsByUserIdAndArtistNameOrAlbumName(@Param("artistName") String artistName, @Param("albumName") String albumName, @Param("userId") long userId);
 
     @Query("SELECT COUNT(u) > 0 from User u JOIN u.playlists p JOIN p.songs s WHERE u.id = :userId AND (s.artistName = :artistName OR s.albumName = :albumName)")
-    boolean existsPlaylistsByArtistNameOrAlbumName(@Param("artistName") String artistName, @Param("albumName") String albumName, @Param("userId") long userId);
+    boolean existsPlaylistsByArtistNameOrAlbumName(@Param("artistName") String artistName, @Param("albumName") String albumName, @Param("userId") long userId);*/
 }

@@ -98,7 +98,7 @@ public class AuthController {
                 User userFound = userService.findByEmail(loginRequest.getEmail());
 
                 if (userFound != null) {
-                    accessToken = jwtService.generateToken(userFound.getEmail());
+                    accessToken = jwtService.generateToken(userFound);
 
                     refreshToken = refreshTokenService.generateRefreshToken(userFound.getEmail());
                 }
@@ -126,7 +126,7 @@ public class AuthController {
         RefreshToken refreshToken = null;
 
         if (userFound != null) {
-            accessToken = jwtService.generateToken(userFound.getEmail());
+            accessToken = jwtService.generateToken(userFound);
 
             refreshToken = refreshTokenService.generateRefreshToken(userFound.getEmail());
         }
@@ -149,7 +149,7 @@ public class AuthController {
                 .map(refreshTokenService::verifyRefreshToken)
                 .map(RefreshToken::getUser)
                 .map(user -> {
-                    String accessToken = jwtService.generateToken(user.getEmail());
+                    String accessToken = jwtService.generateToken(user);
 
                     TokenResponse tokenResponse = new TokenResponse(accessToken, refreshToken.getRefreshToken());
 

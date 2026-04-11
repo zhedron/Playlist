@@ -289,7 +289,7 @@ class UserServiceTest {
         List<Playlist> playlists = new ArrayList<>();
         playlists.add(playlist);
 
-        SongDTO songDTO = new SongDTO(song.getId(), song.getArtistName(), song.getAlbumName(), song.getViews(), song.getCreatedAt(), null, null, 0, song.getType());
+        SongDTO songDTO = new SongDTO(song.getId(), song.getArtistName(), song.getAlbumName(), song.getViews(), song.getCreatedAt(), null, null, 0, song.getType(), null, null);
 
         Set<SongDTO> setSongDTO = Set.of(songDTO);
 
