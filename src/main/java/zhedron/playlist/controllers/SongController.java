@@ -17,6 +17,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import zhedron.playlist.dto.SongDTO;
+import zhedron.playlist.dto.UserDTO;
 import zhedron.playlist.dto.request.SongRequest;
 import zhedron.playlist.dto.response.MessageResponse;
 import zhedron.playlist.dto.response.PaginatedResponse;
@@ -187,6 +188,28 @@ public class SongController {
     }
 
     @GetMapping("/search")
+    @Operation(summary = "Find artist or album song")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully found artist or album",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", implementation = SongDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Not found artist or album",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object"), examples = {
+                    @ExampleObject(
+                            name = "Artist",
+                            value = "${\"message\": \"Song not found with {artistName}\"}",
+                            summary = "Artist not found"
+                    ),
+                    @ExampleObject(
+                            name = "Album",
+                            value = "${\"message\": \"Song not found with {albumName}\"}",
+                            summary = "Album not found"
+                    ),
+                    @ExampleObject(
+                            name = "Artist and Album",
+                            value = "${\"message\": \"Song not found with {artistName} and {albumName}\"}"
+                    )
+            }))
+    })
     public ResponseEntity<List<SongDTO>> findAllByArtistNameOrAlbumName(@RequestParam(required = false) String artistName, @RequestParam(required = false) String albumName) {
         List<SongDTO> songs = songService.findByArtistNameOrAlbumName(artistName, albumName);
 
@@ -194,11 +217,28 @@ public class SongController {
     }
 
     @GetMapping("/my-uploads")
+    @SecurityRequirement(name = "Playlist")
+    @Operation(summary = "Get list uploads of songs")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Found uploads of songs",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+            array = @ArraySchema(schema = @Schema(implementation = SongDTO.class))))
+    })
     public ResponseEntity<List<SongDTO>> findAllByMyUploads() {
         return ResponseEntity.ok().body(songService.findAllByMyUploads());
     }
 
     @GetMapping("/image/{id}")
+    @Operation(summary = "Get image song")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully found image and display",
+            content = {
+                    @Content(mediaType = MediaType.IMAGE_JPEG_VALUE, schema = @Schema(type = "blob", format = "binary")),
+                    @Content(mediaType = MediaType.IMAGE_PNG_VALUE, schema = @Schema(type = "blob", format = "binary"))
+            }),
+            @ApiResponse(responseCode = "404", description = "Not found song",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "${\"message\": \"Song not found with {id}\"}")))
+    })
     public ResponseEntity<?> getImageBySongId(@PathVariable long id) {
         Song song = songService.getSongById(id);
 

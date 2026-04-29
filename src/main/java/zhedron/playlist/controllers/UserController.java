@@ -286,6 +286,13 @@ public class UserController {
     }
 
     @GetMapping("/me")
+    @SecurityRequirement(name = "Playlist")
+    @Operation(summary = "Info about authorization user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User authorized",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserDTO.class))),
+            @ApiResponse(responseCode = "401", description = "User didn't logged")
+    })
     public ResponseEntity<UserDTO> getCurrentUser() {
         User currentUser = userService.getCurrentUser();
 

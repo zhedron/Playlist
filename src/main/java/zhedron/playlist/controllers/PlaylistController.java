@@ -72,6 +72,16 @@ public class PlaylistController {
     }
 
     @PostMapping("/available/{playlistId}")
+    @SecurityRequirement(name = "Playlist")
+    @Operation(summary = "Change to public or private playlist")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully changed available",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "${\"message\": \"Changed available {isPublic}\"}"))),
+            @ApiResponse(responseCode = "404", description = "Not found playlist",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "${\"message\": \"Playlist not found with {playlistId}\"}"))),
+            @ApiResponse(responseCode = "403", description = "Forbidden",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "${\"message\": \"You are not allowed to change this playlist\"}")))
+    })
     public ResponseEntity<MessageResponse> changeAvailable(@PathVariable long playlistId, @RequestParam("public") boolean isPublic) {
         playlistService.changeAvailable(playlistId, isPublic);
 

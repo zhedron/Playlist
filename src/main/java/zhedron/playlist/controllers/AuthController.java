@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -63,7 +64,7 @@ public class AuthController {
             content = @Content(mediaType = "application/json", schema = @Schema(type = "object", example = """
                     {
                       "accessToken": "{accessToken}",
-                      "refreshToken": "refreshToken"
+                      "refreshToken": "{refreshToken}"
                     }"""))),
             @ApiResponse(responseCode = "401", description = "Invalid login",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object"), examples = {
@@ -129,6 +130,17 @@ public class AuthController {
     }
 
     @GetMapping("/google")
+    @SecurityRequirement(name = "Playlist")
+    @Operation(summary = "Get JWT token from google user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Got a access token and refresh token",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = """
+                    {
+                        "accessToken": "{accessToken}",
+                        "refreshToken": "{refreshToken}"
+                    }
+                    """)))
+    })
     public ResponseEntity<?> google() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -216,6 +228,12 @@ public class AuthController {
     }
 
     @PostMapping("/auth/logout")
+    @SecurityRequirement(name = "Playlist")
+    @Operation(summary = "Logout user and delete cookie")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully logout"),
+            @ApiResponse(responseCode = "401", description = "User didn't log")
+    })
     public ResponseEntity<Void> logout() {
         ResponseCookie cookie_accessToken = ResponseCookie.from("accessToken", "")
                 .httpOnly(true)

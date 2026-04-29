@@ -175,6 +175,16 @@ public class SongServiceImpl implements SongService {
     public List<SongDTO> findByArtistNameOrAlbumName(String artistName, String albumName) {
         List<Song> songs = songRepository.findByArtistNameOrAlbumName(artistName, albumName);
 
+        if (songs.isEmpty()) {
+            if (artistName != null && albumName == null) {
+                throw new SongNotFoundException("Song not found with " + artistName);
+            } else if (artistName == null && albumName != null) {
+                throw new SongNotFoundException("Song not found with " + albumName);
+            } else {
+                throw new SongNotFoundException("Song not found with " + artistName + " and " + albumName);
+            }
+        }
+
         return songMapper.songToSongDTOList(songs);
     }
 
