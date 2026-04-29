@@ -2,19 +2,18 @@ package zhedron.playlist.config.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import zhedron.playlist.service.JwtService;
-import zhedron.playlist.service.impl.UserDetailsImpl;
+import zhedron.playlist.services.JwtService;
+import zhedron.playlist.services.impl.UserDetailsImpl;
 
 import java.io.IOException;
 
@@ -32,23 +31,25 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+        String token = null;
 
-        if (header != null && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if (cookie.getName().equals("accessToken")) {
+                    token = cookie.getValue();
+                }
+            }
+        }
 
+        if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             String email = jwtService.extractEmail(token);
 
-            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails user = userDetails.loadUserByUsername(email);
+            UserDetails user = userDetails.loadUserByUsername(email);
 
-                if (jwtService.validateToken(token, user)) {
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+            if (jwtService.validateToken(token, user)) {
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
 
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                }
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
 

@@ -8,14 +8,10 @@ import zhedron.playlist.dto.UserDTO;
 import zhedron.playlist.entity.Playlist;
 import zhedron.playlist.entity.User;
 
-import java.util.List;
-
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = SongMapper.class)
 public interface UserMapper {
     @Mapping(target = "isHiddenPhone", source = "hiddenPhone")
     UserDTO userToUserDTO(User user);
-
-    List<PlaylistDTO> playlistsToPlaylistDTOs(List<Playlist> playlists);
 
     @Mapping(target = "isPublic", source = "public")
     PlaylistDTO playlistToPlaylistDTO(Playlist playlist);

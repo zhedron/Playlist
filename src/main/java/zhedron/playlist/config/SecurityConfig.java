@@ -1,5 +1,6 @@
 package zhedron.playlist.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,8 +21,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import zhedron.playlist.config.filter.JwtFilter;
-import zhedron.playlist.service.CustomOauth2UserService;
-import zhedron.playlist.service.impl.UserDetailsImpl;
+import zhedron.playlist.services.CustomOauth2UserService;
+import zhedron.playlist.services.impl.UserDetailsImpl;
 
 import java.util.List;
 
@@ -30,11 +31,11 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final String[] ALL = {"/login",
+    private final String[] ALL = {"/login", "/refreshtoken",
             "/user/registration", "/user/{userId}", "/user/playlists/{userId}", "/user/update/{userId}", "/user/picture/{userId}",
             "/song/top", "/song/file/{songId}", "/song/perweek", "/song/{songId}", "/song/search", "/song/image/{songId}",
-            "/playlist/search",
-            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"};
+            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
+            "/refreshtoken"};
 
     private final JwtFilter jwtFilter;
     private final CustomOauth2UserService customOauth2UserService;
@@ -57,8 +58,13 @@ public class SecurityConfig {
                     oauth2.userInfoEndpoint(userInfo ->
                         userInfo.userService(customOauth2UserService));
                     oauth2.defaultSuccessUrl("/google", true);
-                }).sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .logout(logout -> logout.logoutUrl("/logout"));
+                })
+                .exceptionHandling(exceptions -> {
+                    exceptions.authenticationEntryPoint((req, resp, e) -> {
+                        resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    });
+                })
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         return http.build();
     }
 
@@ -68,7 +74,8 @@ public class SecurityConfig {
 
         config.setAllowedHeaders(List.of("*"));
         config.setAllowedMethods(List.of("*"));
-        config.setAllowedOrigins(List.of("*"));
+        config.setAllowedOrigins(List.of("http://localhost:4200"));
+        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
