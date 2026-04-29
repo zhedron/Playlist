@@ -236,7 +236,7 @@ public class SongController {
                     @Content(mediaType = MediaType.IMAGE_PNG_VALUE, schema = @Schema(type = "blob", format = "binary"))
             }),
             @ApiResponse(responseCode = "404", description = "Not found song",
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "${\"message\": \"Song not found with {id}\"}")))
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Song not found with {id}\"}")))
     })
     public ResponseEntity<?> getImageBySongId(@PathVariable long id) {
         Song song = songService.getSongById(id);
