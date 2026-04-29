@@ -17,7 +17,6 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import zhedron.playlist.dto.SongDTO;
-import zhedron.playlist.dto.UserDTO;
 import zhedron.playlist.dto.request.SongRequest;
 import zhedron.playlist.dto.response.MessageResponse;
 import zhedron.playlist.dto.response.PaginatedResponse;
