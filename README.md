@@ -64,7 +64,7 @@ And download JDK 17 version
 
 * [Java 17](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
 
-### Run program
+# Run program
 
 After install run this command for build application
 
@@ -72,7 +72,7 @@ After install run this command for build application
 docker compose up
 ```
 
-### API Documentation
+# API Documentation
 
 Once the application is running, you can explore and test the endpoints via Swagger UI:
 [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
