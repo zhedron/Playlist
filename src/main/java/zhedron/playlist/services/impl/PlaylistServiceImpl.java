@@ -5,6 +5,7 @@ import zhedron.playlist.dto.PlaylistDTO;
 import zhedron.playlist.entity.Playlist;
 import zhedron.playlist.entity.Song;
 import zhedron.playlist.entity.User;
+import zhedron.playlist.exceptions.AccessDeniedException;
 import zhedron.playlist.exceptions.PlaylistNotFoundException;
 import zhedron.playlist.exceptions.UserNotFoundException;
 import zhedron.playlist.mapper.PlaylistMapper;
@@ -84,6 +85,14 @@ public class PlaylistServiceImpl implements PlaylistService {
     @Override
     public void changeAvailable(long playlistId, boolean isPublic) {
         Playlist playlist = playlistRepository.findById(playlistId).orElseThrow(() -> new PlaylistNotFoundException("Playlist not found with " + playlistId));
+
+        User currentUser = userService.getCurrentUser();
+
+        if (!playlist.getUser().equals(currentUser)) {
+            throw new AccessDeniedException("You are not allowed to change this playlist");
+        } else if (playlist.isPublic() == isPublic) {
+            return;
+        }
 
         playlist.setPublic(isPublic);
 
