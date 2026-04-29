@@ -178,8 +178,8 @@ public class UserController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Got a avatar user",
             content = {
-                    @Content(mediaType = MediaType.IMAGE_PNG_VALUE, schema = @Schema(type = "string", format = "binary")),
-                    @Content(mediaType = MediaType.IMAGE_JPEG_VALUE, schema = @Schema(type = "string", format = "binary"))
+                    @Content(mediaType = MediaType.IMAGE_PNG_VALUE, schema = @Schema(type = "blob", format = "binary")),
+                    @Content(mediaType = MediaType.IMAGE_JPEG_VALUE, schema = @Schema(type = "blob", format = "binary"))
             }),
             @ApiResponse(responseCode = "404", description = "Not found a user",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,

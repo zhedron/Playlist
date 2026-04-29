@@ -134,12 +134,7 @@ public class AuthController {
     @Operation(summary = "Get JWT token from google user")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Got a access token and refresh token",
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = """
-                    {
-                        "accessToken": "{accessToken}",
-                        "refreshToken": "{refreshToken}"
-                    }
-                    """)))
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", implementation = TokenResponse.class))),
     })
     public ResponseEntity<?> google() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -231,7 +226,7 @@ public class AuthController {
     @SecurityRequirement(name = "Playlist")
     @Operation(summary = "Logout user and delete cookie")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully logout"),
+            @ApiResponse(responseCode = "200", description = "Successfully log out"),
             @ApiResponse(responseCode = "401", description = "User didn't log")
     })
     public ResponseEntity<Void> logout() {
