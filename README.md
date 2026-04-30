@@ -72,6 +72,14 @@ After install run this command for build application
 docker compose up
 ```
 
+# Secret Key
+
+Link for generate secret key for JWT
+* [Secret Key](https://jwtsecrets.com/#generator)
+
+Link for generate AES key
+* [Generate AES key](https://www.randomkeygen.com/aes-key)
+
 # API Documentation
 
 Once the application is running, you can explore and test the endpoints via Swagger UI:
