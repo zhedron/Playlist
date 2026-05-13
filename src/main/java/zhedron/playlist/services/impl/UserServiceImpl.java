@@ -23,6 +23,7 @@ import zhedron.playlist.mapper.UserMapper;
 import zhedron.playlist.repository.PlaylistRepository;
 import zhedron.playlist.repository.UserRepository;
 import zhedron.playlist.services.AESEncryptionService;
+import zhedron.playlist.services.EmailService;
 import zhedron.playlist.services.UserService;
 
 
@@ -45,15 +46,18 @@ public class UserServiceImpl implements UserService {
 
     private final AESEncryptionService aesEncryptionService;
 
+    private final EmailService emailService;
+
     private final String PATH = "profile_image/";
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, UserMapper userMapper, PlaylistRepository playlistRepository, AESEncryptionService aesEncryptionService) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, UserMapper userMapper, PlaylistRepository playlistRepository, AESEncryptionService aesEncryptionService, EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
         this.playlistRepository = playlistRepository;
         this.aesEncryptionService = aesEncryptionService;
+        this.emailService = emailService;
     }
 
     @Override
@@ -78,6 +82,10 @@ public class UserServiceImpl implements UserService {
         user.setName(requestUser.getName());
         user.setAbout(requestUser.getAbout());
         user.setHiddenPhone(true);
+
+        String text = "Congratulations! Your account successfully created! Now you listen to music, create song and add your favorite songs to your playlist";
+
+        emailService.sendTo(user.getEmail(), "Your account created", text);
 
         log.info("Saved user {}", user);
 
@@ -179,12 +187,17 @@ public class UserServiceImpl implements UserService {
 
         User currentUser = getCurrentUser();
 
+        String subject = "Your data for your account changed";
+        String text = null;
+
         if (currentUser.getId() != userId && !currentUser.getRole().equals(Role.ADMIN)) {
             throw new Exception("You can't change.");
         }
 
         if (userUpdate.getEmail() != null) {
             user.setEmail(userUpdate.getEmail());
+
+            text = "Your email changed to " + userUpdate.getEmail();
         }
         if (userUpdate.getPassword() != null) {
             if (passwordEncoder.matches(userUpdate.getPassword(), user.getPassword())) {
@@ -195,10 +208,14 @@ public class UserServiceImpl implements UserService {
         }
         if (userUpdate.getAbout() != null) {
             user.setAbout(userUpdate.getAbout());
+
+            text = "Your about changed to " + userUpdate.getAbout();
         }
 
         if (userUpdate.getName() != null) {
             user.setName(userUpdate.getName());
+
+            text = "Your name changed to " + userUpdate.getName();
         }
         if (userUpdate.getPhone() != null) {
             user.setPhone(aesEncryptionService.encrypt(userUpdate.getPhone()));
@@ -215,6 +232,12 @@ public class UserServiceImpl implements UserService {
         log.info("Updated user.");
 
         userRepository.save(user);
+
+        if (text != null) {
+            String textWarn = "If you haven't done, please contact to technical support";
+
+            emailService.sendTo(user.getEmail(), subject, text + "\n" + textWarn);
+        }
     }
 
     @Override
