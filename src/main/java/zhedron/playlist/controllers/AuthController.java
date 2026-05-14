@@ -18,11 +18,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -127,48 +124,6 @@ public class AuthController {
         }
 
         return null;
-    }
-
-    @GetMapping("/google")
-    @SecurityRequirement(name = "Playlist")
-    @Operation(summary = "Get JWT token from google user")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Got a access token and refresh token",
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", implementation = TokenResponse.class))),
-    })
-    public ResponseEntity<?> google() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-
-        User userFound = userService.findByEmail((String) oAuth2User.getAttributes().get("email"));
-
-        if (userFound != null) {
-            String accessToken = jwtService.generateToken(userFound);
-
-            RefreshToken refreshToken = refreshTokenService.generateRefreshToken(userFound.getEmail());
-
-            TokenResponse tokenResponse = new TokenResponse(accessToken, refreshToken.getRefreshToken());
-
-            ResponseCookie cookie_accessToken = ResponseCookie.from("accessToken", accessToken)
-                    .httpOnly(true)
-                    .path("/")
-                    .maxAge(Duration.ofMinutes(15))
-                    .build();
-
-            ResponseCookie cookie_refreshToken = ResponseCookie.from("refreshToken", refreshToken.getRefreshToken())
-                    .httpOnly(true)
-                    .path("/refreshtoken")
-                    .maxAge(Duration.ofDays(30))
-                    .build();
-
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.SET_COOKIE, cookie_accessToken.toString())
-                    .header(HttpHeaders.SET_COOKIE, cookie_refreshToken.toString())
-                    .body(tokenResponse);
-        }
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     @PostMapping("/refreshtoken")

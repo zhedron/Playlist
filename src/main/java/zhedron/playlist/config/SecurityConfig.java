@@ -23,6 +23,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import zhedron.playlist.config.filter.JwtFilter;
 import zhedron.playlist.services.CustomOauth2UserService;
 import zhedron.playlist.services.impl.UserDetailsImpl;
+import zhedron.playlist.success.handlers.GoogleSuccessHandler;
 
 import java.util.List;
 
@@ -39,10 +40,12 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
     private final CustomOauth2UserService customOauth2UserService;
+    private final GoogleSuccessHandler googleSuccessHandler;
 
-    public SecurityConfig (JwtFilter jwtFilter, CustomOauth2UserService customOauth2UserService) {
+    public SecurityConfig (JwtFilter jwtFilter, CustomOauth2UserService customOauth2UserService, GoogleSuccessHandler googleSuccessHandler) {
         this.jwtFilter = jwtFilter;
         this.customOauth2UserService = customOauth2UserService;
+        this.googleSuccessHandler = googleSuccessHandler;
     }
 
     @Bean
@@ -57,7 +60,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> {
                     oauth2.userInfoEndpoint(userInfo ->
                         userInfo.userService(customOauth2UserService));
-                    oauth2.defaultSuccessUrl("/google", true);
+                    oauth2.successHandler(googleSuccessHandler);
                 })
                 .exceptionHandling(exceptions -> {
                     exceptions.authenticationEntryPoint((req, resp, e) -> {
