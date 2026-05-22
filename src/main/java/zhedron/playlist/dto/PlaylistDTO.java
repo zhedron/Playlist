@@ -5,5 +5,6 @@ import java.util.Set;
 
 public record PlaylistDTO(long id, Set<SongDTO> songs, long views,
                           long duration, boolean isPublic, int counter,
-                          LocalDateTime createdAt) {
+                          LocalDateTime createdAt, String imageURL, String contentType,
+                          String title) {
 }

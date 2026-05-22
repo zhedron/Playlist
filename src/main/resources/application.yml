@@ -12,14 +12,13 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
 
-
   security:
     oauth2:
       client:
         registration:
           google:
-            client-id:
-            client-secret:
+            client-id: ${CLIENT_ID}
+            client-secret: ${CLIENT_SECRET}
             scope:
               - email
               - profile
@@ -29,8 +28,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username:
-    password:
+    username: zhedron@gmail.com
+    password: ${PASSWORD_GOOGLE}
     properties:
       mail:
         smtp:
@@ -40,7 +39,7 @@ spring:
 
 jwt:
   secret:
-    key:
+    key: ${JWT_KEY}
   expiration: 604800000
 
 secret_key:

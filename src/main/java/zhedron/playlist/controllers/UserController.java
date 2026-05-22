@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -27,6 +28,7 @@ import zhedron.playlist.enums.Provider;
 import zhedron.playlist.enums.Role;
 import zhedron.playlist.mapper.UserMapper;
 import zhedron.playlist.services.AESEncryptionService;
+import zhedron.playlist.services.SubscriptionService;
 import zhedron.playlist.services.UserService;
 
 import java.io.IOException;
@@ -45,20 +47,22 @@ public class UserController {
     private final UserService userService;
     private final UserMapper userMapper;
     private final AESEncryptionService aesEncryptionService;
+    private final SubscriptionService subscriptionService;
 
     private final String PICTURE_PATH = "profile_image/";
 
     @Autowired
-    public UserController(UserService userService, UserMapper userMapper, AESEncryptionService aesEncryptionService) {
+    public UserController(UserService userService, UserMapper userMapper, AESEncryptionService aesEncryptionService, SubscriptionService subscriptionService) {
         this.userService = userService;
         this.userMapper = userMapper;
         this.aesEncryptionService = aesEncryptionService;
+        this.subscriptionService = subscriptionService;
     }
 
     @PostMapping(value = "/registration")
     @Operation(summary = "Create a new user", description = "Add a new user")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200",
+            @ApiResponse(responseCode = "201",
             description = "User created successfully",
             content = @Content(schema = @Schema(implementation = UserDTO.class))),
             @ApiResponse(responseCode = "400",
@@ -94,7 +98,7 @@ public class UserController {
 
         UserDTO userDTO = userMapper.userToUserDTO(userSaved);
 
-        return ResponseEntity.ok(userDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(userDTO);
     }
 
     @GetMapping("{id}")
@@ -299,5 +303,39 @@ public class UserController {
         UserDTO userDTO = userMapper.userToUserDTO(currentUser);
 
         return ResponseEntity.ok(userDTO);
+    }
+
+    @PostMapping("/subscribe/{id}")
+    @SecurityRequirement(name = "Playlist")
+    @Operation(summary = "Subscribe to User")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully subscribed to User",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"User subscribed successfully\"}"))),
+            @ApiResponse(responseCode = "404", description = "User not found",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"User not found\"}"))),
+            @ApiResponse(responseCode = "403", description = "User subscribed to User",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"You're already subscribed!\"}")))
+    })
+    public ResponseEntity<MessageResponse> subscribeToUser(@PathVariable long id) {
+        subscriptionService.subscribeToUser(id);
+
+        return ResponseEntity.ok(new MessageResponse("User subscribed successfully"));
+    }
+
+    @PostMapping("/unsubscribe/{id}")
+    @SecurityRequirement(name = "Playlist")
+    @Operation(summary = "Unsubscribe from User")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully unsubscribed from User",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"User unsubscribed successfully\"}"))),
+            @ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"User not found\"}"))),
+            @ApiResponse(responseCode = "403", description = "User unsubscribed from User",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"You're not subscribed!\"}")))
+    })
+    public ResponseEntity<MessageResponse> unsubscribeFromUser(@PathVariable long id) {
+        subscriptionService.unsubscribeFromUser(id);
+
+        return ResponseEntity.ok(new MessageResponse("User unsubscribed successfully"));
     }
 }

@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -55,7 +56,7 @@ public class SongController {
     @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(encoding = @Encoding(name = "requestSong", contentType = MediaType.APPLICATION_JSON_VALUE)))
     @Operation(summary = "Create song", description = "Create song and upload song")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully uploaded song and created",
+            @ApiResponse(responseCode = "201", description = "Successfully uploaded song and created",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = SongDTO.class))),
             @ApiResponse(responseCode = "400", description = "Not successfully create song or upload song",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object"), examples = {
@@ -78,6 +79,11 @@ public class SongController {
                             name = "Invalid content type",
                             value = "{\"message\": \"Upload audio file.\"}",
                             summary = "If file uploaded does not contain audio/mp4 or audio/mpeg"
+                    ),
+                    @ExampleObject(
+                            name = "Invalid content type",
+                            value = "{\"message\": \"Upload image file.\"}",
+                            summary = "If file uploaded does not contain audio/mp4 or audio/mpeg"
                     )
             }))
     })
@@ -99,7 +105,7 @@ public class SongController {
             return ResponseEntity.badRequest().body(new MessageResponse("Upload image file."));
         }
 
-        return ResponseEntity.ok(songService.save(requestSong, files, image));
+        return ResponseEntity.status(HttpStatus.CREATED).body(songService.save(requestSong, files, image));
     }
 
     @DeleteMapping("/delete/{id}")

@@ -20,6 +20,7 @@ import zhedron.playlist.entity.User;
 import zhedron.playlist.enums.Provider;
 import zhedron.playlist.enums.Role;
 import zhedron.playlist.enums.Type;
+import zhedron.playlist.exceptions.PhoneExistException;
 import zhedron.playlist.exceptions.PlaylistNotFoundException;
 import zhedron.playlist.exceptions.UserNotFoundException;
 import zhedron.playlist.mapper.UserMapper;
@@ -57,6 +58,9 @@ class UserServiceTest {
 
     @Mock
     private AESEncryptionService aesEncryptionService;
+
+    @Mock
+    private EmailService emailService;
 
     @Mock
     private Authentication authentication;
@@ -101,16 +105,37 @@ class UserServiceTest {
         request.setAbout("about");
 
         when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
+        when(userRepository.existsByPhone("+394111215988")).thenReturn(false);
         when(passwordEncoder.encode("secret")).thenReturn("encoded-password");
-        when(aesEncryptionService.encrypt(request.getPhone())).thenReturn("encrypted-phone");
+        when(aesEncryptionService.encrypt(request.getPhone())).thenReturn("+394111215988");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         User savedUser = userService.save(request);
 
         assertEquals("encoded-password", savedUser.getPassword());
-        assertEquals("encrypted-phone", savedUser.getPhone());
+        assertEquals("+394111215988", savedUser.getPhone());
         assertEquals(Provider.LOCAL, savedUser.getProvider());
         assertTrue(savedUser.isHiddenPhone());
+    }
+
+    @Test
+    void saveShouldThrowWhenEncryptedPhoneAlreadyExists() {
+        UserRequest request = new UserRequest();
+        request.setName("test");
+        request.setEmail("test@test.com");
+        request.setPassword("secret");
+        request.setPhone("+394111215988");
+
+        when(aesEncryptionService.encrypt(request.getPhone())).thenReturn("+394111215988");
+        when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
+        when(userRepository.existsByPhone("+394111215988")).thenReturn(true);
+
+        PhoneExistException exception = assertThrows(
+                PhoneExistException.class,
+                () -> userService.save(request)
+        );
+
+        assertEquals("Phone already exists, use phone number", exception.getMessage());
     }
 
     @Test
@@ -139,7 +164,10 @@ class UserServiceTest {
                 0L,
                 true,
                 1,
-                playlist.getCreatedAt()
+                playlist.getCreatedAt(),
+                "cover.jpg",
+                "image/jpeg",
+                "Favorites"
         );
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));

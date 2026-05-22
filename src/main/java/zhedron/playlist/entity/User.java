@@ -49,4 +49,7 @@ public class User {
     private String contentType;
 
     private boolean isHiddenPhone;
+
+    @OneToMany(mappedBy = "subscriber")
+    private List<Subscription> subscriptions;
 }

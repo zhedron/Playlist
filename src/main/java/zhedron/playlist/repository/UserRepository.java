@@ -15,4 +15,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT p from User u JOIN u.playlists p WHERE u.id = :userId")
     List<Playlist> findByUserId(long userId);
+
+    boolean existsByPhone(String phone);
 }

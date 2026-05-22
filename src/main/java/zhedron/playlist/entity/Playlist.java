@@ -29,4 +29,10 @@ public class Playlist {
     private int counter;
 
     private LocalDateTime createdAt;
+
+    private String imageURL;
+
+    private String contentType;
+
+    private String title;
 }

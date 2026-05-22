@@ -10,6 +10,7 @@ import zhedron.playlist.dto.SongDTO;
 import zhedron.playlist.entity.Playlist;
 import zhedron.playlist.entity.Song;
 import zhedron.playlist.entity.User;
+import zhedron.playlist.exceptions.AccessDeniedException;
 import zhedron.playlist.exceptions.PlaylistNotFoundException;
 import zhedron.playlist.exceptions.UserNotFoundException;
 import zhedron.playlist.mapper.PlaylistMapper;
@@ -18,13 +19,16 @@ import zhedron.playlist.repository.UserRepository;
 import zhedron.playlist.services.impl.PlaylistServiceImpl;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,33 +53,95 @@ class PlaylistServiceTest {
     private PlaylistMapper playlistMapper;
 
     @Test
-    void addSongShouldCreatePlaylistWhenUserDoesNotHaveOne() {
+    void addSongShouldAddSongToExistingPlaylist() {
         User user = new User();
         user.setId(1L);
         user.setEmail("test@test.com");
-        user.setPlaylists(new java.util.ArrayList<>());
+        user.setPlaylists(new ArrayList<>());
 
         Song song = new Song();
         song.setId(5L);
         song.setDuration(180);
 
+        Playlist playlist = new Playlist();
+        playlist.setId(10L);
+        playlist.setUser(user);
+        playlist.setDuration(20L);
+
         when(songService.getSongById(5L)).thenReturn(song);
         when(userService.getCurrentUser()).thenReturn(user);
-        when(playlistRepository.findByUser(user)).thenReturn(null);
+        when(playlistRepository.findById(10L)).thenReturn(Optional.of(playlist));
 
-        playlistService.addSong(5L, true);
+        playlistService.addSong(5L, true, 10L);
 
         assertEquals(1, user.getPlaylists().size());
-        assertEquals(1, user.getPlaylists().get(0).getSongs().size());
-        assertTrue(user.getPlaylists().get(0).isPublic());
-        verify(playlistRepository).save(user.getPlaylists().get(0));
+        assertEquals(1, playlist.getSongs().size());
+        assertEquals(200L, playlist.getDuration());
+        assertEquals(1, playlist.getCounter());
+        verify(playlistRepository).save(playlist);
         verify(userRepository).save(user);
+    }
+
+    @Test
+    void addSongShouldThrowWhenPlaylistMissing() {
+        User user = new User();
+        user.setId(1L);
+
+        Song song = new Song();
+        song.setId(5L);
+
+        when(songService.getSongById(5L)).thenReturn(song);
+        when(userService.getCurrentUser()).thenReturn(user);
+        when(playlistRepository.findById(10L)).thenReturn(Optional.empty());
+
+        PlaylistNotFoundException exception = assertThrows(
+                PlaylistNotFoundException.class,
+                () -> playlistService.addSong(5L, true, 10L)
+        );
+
+        assertEquals("Playlist not found", exception.getMessage());
+        verify(playlistRepository, never()).save(any());
+        verify(userRepository, never()).save(user);
+    }
+
+    @Test
+    void addSongShouldThrowWhenUserHasPlaylistOwnedByAnotherUser() {
+        User currentUser = new User();
+        currentUser.setId(1L);
+
+        User anotherUser = new User();
+        anotherUser.setId(2L);
+
+        Playlist anotherUserPlaylist = new Playlist();
+        anotherUserPlaylist.setId(99L);
+        anotherUserPlaylist.setUser(anotherUser);
+        currentUser.setPlaylists(new ArrayList<>());
+
+        Song song = new Song();
+        song.setId(5L);
+
+        Playlist targetPlaylist = new Playlist();
+        targetPlaylist.setId(10L);
+        targetPlaylist.setUser(anotherUser);
+
+        when(songService.getSongById(5L)).thenReturn(song);
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(playlistRepository.findById(10L)).thenReturn(Optional.of(targetPlaylist));
+
+        AccessDeniedException exception = assertThrows(
+                AccessDeniedException.class,
+                () -> playlistService.addSong(5L, true, 10L)
+        );
+
+        assertEquals("You're can't add this song to this playlist", exception.getMessage());
+        verify(playlistRepository, never()).save(any());
+        verify(userRepository, never()).save(currentUser);
     }
 
     @Test
     void getPlaylistsByArtistNameOrAlbumNameShouldReturnMappedPlaylists() {
         SongDTO songDTO = new SongDTO(1L, "artist", "album", 10L, LocalDateTime.now(), null, null, 120, null, null, null, 1L);
-        PlaylistDTO playlistDTO = new PlaylistDTO(2L, Set.of(songDTO), 10L, 120L, true, 1, LocalDateTime.now());
+        PlaylistDTO playlistDTO = new PlaylistDTO(2L, Set.of(songDTO), 10L, 120L, true, 1, LocalDateTime.now(), "cover.jpg", "image/jpeg", "Favorites");
         Playlist playlist = new Playlist();
 
         when(userRepository.existsById(1L)).thenReturn(true);
@@ -112,5 +178,124 @@ class PlaylistServiceTest {
         );
 
         assertEquals("Playlist not found with artist album", exception.getMessage());
+    }
+
+    @Test
+    void changeAvailableShouldUpdatePlaylistWhenOwnerChangesVisibility() {
+        User user = new User();
+        user.setId(1L);
+
+        Playlist playlist = new Playlist();
+        playlist.setId(10L);
+        playlist.setUser(user);
+        playlist.setPublic(false);
+
+        when(playlistRepository.findById(10L)).thenReturn(Optional.of(playlist));
+        when(userService.getCurrentUser()).thenReturn(user);
+
+        playlistService.changeAvailable(10L, true);
+
+        assertEquals(true, playlist.isPublic());
+        verify(playlistRepository).save(playlist);
+    }
+
+    @Test
+    void changeAvailableShouldThrowWhenCurrentUserIsNotOwner() {
+        User owner = new User();
+        owner.setId(1L);
+
+        User currentUser = new User();
+        currentUser.setId(2L);
+
+        Playlist playlist = new Playlist();
+        playlist.setId(10L);
+        playlist.setUser(owner);
+
+        when(playlistRepository.findById(10L)).thenReturn(Optional.of(playlist));
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+
+        AccessDeniedException exception = assertThrows(
+                AccessDeniedException.class,
+                () -> playlistService.changeAvailable(10L, true)
+        );
+
+        assertEquals("You're can't change this playlist", exception.getMessage());
+        verify(playlistRepository, never()).save(playlist);
+    }
+
+    @Test
+    void changeAvailableShouldDoNothingWhenVisibilityAlreadyMatches() {
+        User user = new User();
+        user.setId(1L);
+
+        Playlist playlist = new Playlist();
+        playlist.setId(10L);
+        playlist.setUser(user);
+        playlist.setPublic(true);
+
+        when(playlistRepository.findById(10L)).thenReturn(Optional.of(playlist));
+        when(userService.getCurrentUser()).thenReturn(user);
+
+        playlistService.changeAvailable(10L, true);
+
+        verify(playlistRepository, never()).save(playlist);
+    }
+
+    @Test
+    void deletePlaylistShouldDeletePlaylistWhenCurrentUserIsOwner() {
+        User user = new User();
+        user.setId(1L);
+
+        Playlist playlist = new Playlist();
+        playlist.setId(10L);
+        playlist.setUser(user);
+
+        when(userService.getCurrentUser()).thenReturn(user);
+        when(playlistRepository.findById(10L)).thenReturn(Optional.of(playlist));
+
+        playlistService.deletePlaylist(10L);
+
+        verify(playlistRepository).delete(playlist);
+    }
+
+    @Test
+    void deletePlaylistShouldThrowWhenPlaylistMissing() {
+        User user = new User();
+        user.setId(1L);
+
+        when(userService.getCurrentUser()).thenReturn(user);
+        when(playlistRepository.findById(10L)).thenReturn(Optional.empty());
+
+        PlaylistNotFoundException exception = assertThrows(
+                PlaylistNotFoundException.class,
+                () -> playlistService.deletePlaylist(10L)
+        );
+
+        assertEquals("Playlist not found with 10", exception.getMessage());
+        verify(playlistRepository, never()).delete(any());
+    }
+
+    @Test
+    void deletePlaylistShouldThrowWhenCurrentUserIsNotOwner() {
+        User currentUser = new User();
+        currentUser.setId(1L);
+
+        User owner = new User();
+        owner.setId(2L);
+
+        Playlist playlist = new Playlist();
+        playlist.setId(10L);
+        playlist.setUser(owner);
+
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(playlistRepository.findById(10L)).thenReturn(Optional.of(playlist));
+
+        AccessDeniedException exception = assertThrows(
+                AccessDeniedException.class,
+                () -> playlistService.deletePlaylist(10L)
+        );
+
+        assertEquals("You can't delete this playlist", exception.getMessage());
+        verify(playlistRepository, never()).delete(playlist);
     }
 }

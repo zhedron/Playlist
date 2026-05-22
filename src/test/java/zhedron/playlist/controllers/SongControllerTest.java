@@ -109,7 +109,7 @@ class SongControllerTest {
                         .file(audioPart)
                         .file(requestPart)
                         .file(imagePart))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$[0].artistName").value("artist"))
                 .andExpect(jsonPath("$[0].albumName").value("album"));
     }

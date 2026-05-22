@@ -1,7 +1,10 @@
 package zhedron.playlist.services.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import zhedron.playlist.dto.PlaylistDTO;
+import zhedron.playlist.dto.request.PlaylistRequest;
 import zhedron.playlist.entity.Playlist;
 import zhedron.playlist.entity.Song;
 import zhedron.playlist.entity.User;
@@ -15,9 +18,15 @@ import zhedron.playlist.services.PlaylistService;
 import zhedron.playlist.services.SongService;
 import zhedron.playlist.services.UserService;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 public class PlaylistServiceImpl implements PlaylistService {
     private final PlaylistRepository playlistRepository;
@@ -25,6 +34,8 @@ public class PlaylistServiceImpl implements PlaylistService {
     private final SongService songService;
     private final UserService userService;
     private final PlaylistMapper playlistMapper;
+
+    private final String PATH = "playlist_image";
 
     public PlaylistServiceImpl(PlaylistRepository playlistRepository, UserRepository userRepository, SongService songService, UserService userService, PlaylistMapper playlistMapper) {
         this.playlistRepository = playlistRepository;
@@ -35,27 +46,21 @@ public class PlaylistServiceImpl implements PlaylistService {
     }
 
     @Override
-    public void addSong(long idSong, boolean isPublic) {
+    public void addSong(long idSong, boolean isPublic, long playlistId) {
         Song song = songService.getSongById(idSong);
 
         User user = userService.getCurrentUser();
 
-        Playlist playlist = playlistRepository.findByUser(user);
+        Playlist playlist = playlistRepository.findById(playlistId).orElseThrow(() -> new PlaylistNotFoundException("Playlist not found"));
 
-        if (playlist == null) {
-            playlist = new Playlist();
-
-            playlist.getSongs().add(song);
-            playlist.setUser(user);
-            playlist.setDuration(song.getDuration());
-            playlist.setPublic(isPublic);
-            playlist.setCreatedAt(LocalDateTime.now());
-        } else {
-            playlist.getSongs().add(song);
-            playlist.setUser(user);
-            playlist.setDuration(playlist.getDuration() + song.getDuration());
-            playlist.setCreatedAt(LocalDateTime.now());
+        if (!playlist.getUser().equals(user)) {
+            throw new AccessDeniedException("You're can't add this song to this playlist");
         }
+
+        playlist.getSongs().add(song);
+        playlist.setUser(user);
+        playlist.setDuration(playlist.getDuration() + song.getDuration());
+        playlist.setCreatedAt(LocalDateTime.now());
 
         playlist.setCounter(playlist.getSongs().size());
 
@@ -89,7 +94,7 @@ public class PlaylistServiceImpl implements PlaylistService {
         User currentUser = userService.getCurrentUser();
 
         if (!playlist.getUser().equals(currentUser)) {
-            throw new AccessDeniedException("You are not allowed to change this playlist");
+            throw new AccessDeniedException("You're can't change this playlist");
         } else if (playlist.isPublic() == isPublic) {
             return;
         }
@@ -97,5 +102,53 @@ public class PlaylistServiceImpl implements PlaylistService {
         playlist.setPublic(isPublic);
 
         playlistRepository.save(playlist);
+    }
+
+    @Override
+    public void savePlaylist(PlaylistRequest playlistRequest, MultipartFile file) throws IOException {
+        Path path = Paths.get(PATH);
+
+        if (Files.notExists(path)) {
+            Files.createDirectories(path);
+        }
+
+        User user = userService.getCurrentUser();
+
+        String fileName = user.getName() + " " + file.getOriginalFilename();
+
+        String contentType = file.getContentType();
+
+        Path createFile = Paths.get(PATH).resolve(fileName).normalize();
+
+        Files.copy(file.getInputStream(), createFile, StandardCopyOption.REPLACE_EXISTING);
+
+        Playlist playlist = new Playlist();
+
+        playlist.setTitle(playlistRequest.getTitle());
+        playlist.setUser(user);
+        playlist.setPublic(playlistRequest.isPublic());
+        playlist.setImageURL(fileName);
+        playlist.setContentType(contentType);
+
+        user.getPlaylists().add(playlist);
+
+        playlistRepository.save(playlist);
+
+        userRepository.save(user);
+    }
+
+    @Override
+    public void deletePlaylist(long playlistId) {
+        User currentUser = userService.getCurrentUser();
+
+        Playlist playlist = playlistRepository.findById(playlistId).orElseThrow(() -> new PlaylistNotFoundException("Playlist not found with " + playlistId));
+
+        if (!playlist.getUser().equals(currentUser)) {
+            throw new AccessDeniedException("You can't delete this playlist");
+        }
+
+        playlistRepository.delete(playlist);
+
+        log.info("Playlist deleted successfully {}", playlistId);
     }
 }

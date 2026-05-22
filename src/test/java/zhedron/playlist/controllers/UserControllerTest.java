@@ -21,9 +21,11 @@ import zhedron.playlist.enums.Provider;
 import zhedron.playlist.enums.Role;
 import zhedron.playlist.enums.Type;
 import zhedron.playlist.exceptions.PlaylistNotFoundException;
+import zhedron.playlist.exceptions.SubscribedException;
 import zhedron.playlist.exceptions.UserNotFoundException;
 import zhedron.playlist.mapper.UserMapper;
 import zhedron.playlist.services.AESEncryptionService;
+import zhedron.playlist.services.SubscriptionService;
 import zhedron.playlist.services.UserService;
 
 import java.time.LocalDateTime;
@@ -66,6 +68,9 @@ class UserControllerTest {
     @MockitoBean
     private AESEncryptionService aesEncryptionService;
 
+    @MockitoBean
+    private SubscriptionService subscriptionService;
+
     private User user;
     private UserDTO userDTO;
 
@@ -93,6 +98,7 @@ class UserControllerTest {
                 "image/jpeg",
                 "encrypted-phone",
                 false,
+                null,
                 null
         );
     }
@@ -112,7 +118,7 @@ class UserControllerTest {
         mockMvc.perform(post("/user/registration")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("test"))
                 .andExpect(jsonPath("$.email").value("test@test.com"));
     }
@@ -212,7 +218,7 @@ class UserControllerTest {
     @Test
     void getPlaylistsShouldReturnPlaylistList() throws Exception {
         SongDTO song = new SongDTO(3L, "artist", "album", 5L, LocalDateTime.now(), null, null, 180, Type.SINGLE, null, null, 1L);
-        PlaylistDTO playlist = new PlaylistDTO(11L, Set.of(song), 5L, 180L, true, 1, LocalDateTime.now());
+        PlaylistDTO playlist = new PlaylistDTO(11L, Set.of(song), 5L, 180L, true, 1, LocalDateTime.now(), "cover.jpg", "image/jpeg", "Favorites");
 
         when(userService.getPlaylists(1L)).thenReturn(List.of(playlist));
 
@@ -220,5 +226,43 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(11))
                 .andExpect(jsonPath("$[0].songs[0].albumName").value("album"));
+    }
+
+    @Test
+    void subscribeToUserShouldReturnSuccessMessage() throws Exception {
+        mockMvc.perform(post("/user/subscribe/2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("User subscribed successfully"));
+
+        verify(subscriptionService).subscribeToUser(2L);
+    }
+
+    @Test
+    void subscribeToUserShouldReturnForbiddenWhenAlreadySubscribed() throws Exception {
+        doThrow(new SubscribedException("You're already subscribed!"))
+                .when(subscriptionService).subscribeToUser(2L);
+
+        mockMvc.perform(post("/user/subscribe/2"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("You're already subscribed!"));
+    }
+
+    @Test
+    void unsubscribeFromUserShouldReturnSuccessMessage() throws Exception {
+        mockMvc.perform(post("/user/unsubscribe/2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("User unsubscribed successfully"));
+
+        verify(subscriptionService).unsubscribeFromUser(2L);
+    }
+
+    @Test
+    void unsubscribeFromUserShouldReturnForbiddenWhenNotSubscribed() throws Exception {
+        doThrow(new SubscribedException("You're not subscribed!"))
+                .when(subscriptionService).unsubscribeFromUser(2L);
+
+        mockMvc.perform(post("/user/unsubscribe/2"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("You're not subscribed!"));
     }
 }
