@@ -1,6 +1,5 @@
 package zhedron.playlist.dto;
 
-import zhedron.playlist.entity.Subscription;
 import zhedron.playlist.enums.Provider;
 import zhedron.playlist.enums.Role;
 
