@@ -60,28 +60,28 @@ public class UserController {
     }
 
     @PostMapping(value = "/registration")
-    @Operation(summary = "Create a new user", description = "Add a new user")
+    @Operation(summary = "Register a new user", description = "Create a new user account in the system")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201",
             description = "User created successfully",
             content = @Content(schema = @Schema(implementation = UserDTO.class))),
             @ApiResponse(responseCode = "400",
-            description = "Invalid name, email, password",
+            description = "Validation failed for registration data",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object"), examples = {
                     @ExampleObject(
-                            name = "Invalid name",
+                            name = "Empty name",
                             value = "{\"error\": \"Name must not be empty\"}",
-                            summary = "Name"
+                            summary = "Triggered when the provided name is empty or missing"
                     ),
                     @ExampleObject(
-                            name = "Invalid email",
+                            name = "Missing email",
                             value = "{\"error\": \"Write your email\"}",
-                            summary = "Email"
+                            summary = "Triggered when the email field is not provided"
                     ),
                     @ExampleObject(
-                            name = "Invalid password",
+                            name = "Null password",
                             value = "{\"error\": \"Password must not be null\"}",
-                            summary = "Password"
+                            summary = "Triggered when the password field is null"
                     )
             }))
     })
@@ -102,11 +102,11 @@ public class UserController {
     }
 
     @GetMapping("{id}")
-    @Operation(summary = "Get a user by id", description = "If found user, then get a data user")
+    @Operation(summary = "Find a user by id", description = "Retrieve detailed profile information for a specific user")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully found user",
+            @ApiResponse(responseCode = "200", description = "User profile found successfully",
                     content = @Content(schema = @Schema(implementation = UserDTO.class))),
-            @ApiResponse(responseCode = "404", description = "Not found a user",
+            @ApiResponse(responseCode = "404", description = "Not found user",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(type = "object", example = "{\"message\": \"Not found a user {id}\"}")))
     })
@@ -119,11 +119,11 @@ public class UserController {
     }
 
     @GetMapping("/playlists/{userId}")
-    @Operation(summary = "Find user playlist", description = "If found user, then get a songs in user playlist")
+    @Operation(summary = "Get user playlists", description = "Retrieve all playlists belonging to a specific user")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully found user",
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved user playlists",
                     content = @Content(schema = @Schema(implementation = PlaylistDTO.class))),
-            @ApiResponse(responseCode = "404", description = "Not found a user",
+            @ApiResponse(responseCode = "404", description = "Not found user",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(type = "object", example = "{\"error\": \"Not found a user\"}")))
     })
@@ -133,26 +133,26 @@ public class UserController {
 
     @DeleteMapping(value = "/playlist/delete/{playlistId}/{songId}")
     @SecurityRequirement(name = "Playlist")
-    @Operation(summary = "Find user playlist and song from user playlist", description = "If successfully found, then delete song from user playlist")
+    @Operation(summary = "Remove a song from the playlist", description = "Delete a specific song reference inside a user's playlist")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully deleted song from user playlist",
+            @ApiResponse(responseCode = "200", description = "Song successfully removed from playlist",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Song from playlist deleted successfully\"}"))),
             @ApiResponse(responseCode = "404", description = "Not found playlist or song",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object"), examples = {
                     @ExampleObject(
                             name = "Not found playlist",
                             value = "{\"message\": \"Playlist not found with {id}\"}",
-                            summary = "Playlist"
+                            summary = "Triggered when the specified playlistId does not exist"
                     ),
                     @ExampleObject(
-                            name = "Not found a user",
+                            name = "Not found user",
                             value = "{\"message\": \"User not found with {id}\"}",
-                            summary = "User"
+                            summary = "Triggered when the user associated with the request does not exist"
                     ),
                     @ExampleObject(
-                            name = "Not found a song",
+                            name = "Not found song",
                             value = "{\"message\": \"Song not found with {id}\"}",
-                            summary = "Song"
+                            summary = "Triggered when the specified songId does not exist inside the playlist"
                     )
             }))
     })
@@ -164,11 +164,11 @@ public class UserController {
 
     @PutMapping("/block/{id}")
     @SecurityRequirement(name = "Playlist")
-    @Operation(summary = "Block user", description = "If user blocked, then he's can't logging in application")
+    @Operation(summary = "Block a user", description = "Suspend a user account to prevent them from logging into the application")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User blocked successfully",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"User blocked successfully\"}"))),
-            @ApiResponse(responseCode = "404", description = "Not found a user",
+            @ApiResponse(responseCode = "404", description = "Not found user",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"User not found with {id}\"}")))
     })
     public ResponseEntity<MessageResponse> block(@PathVariable long id) {
@@ -178,14 +178,14 @@ public class UserController {
     }
 
     @GetMapping(value = "/picture/{id}", produces = {MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE})
-    @Operation(summary = "Get a avatar user", description = "Display a avatar user")
+    @Operation(summary = "Get user profile avatar", description = "Fetch and render the binary image file of a user's avatar picture")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Got a avatar user",
+            @ApiResponse(responseCode = "200", description = "Avatar image retrieved successfully",
             content = {
                     @Content(mediaType = MediaType.IMAGE_PNG_VALUE, schema = @Schema(type = "blob", format = "binary")),
                     @Content(mediaType = MediaType.IMAGE_JPEG_VALUE, schema = @Schema(type = "blob", format = "binary"))
             }),
-            @ApiResponse(responseCode = "404", description = "Not found a user",
+            @ApiResponse(responseCode = "404", description = "Not found user",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
             schema = @Schema(type = "object", example = "{\"error\": \"User not found with {id}\"}")))
     })
@@ -206,24 +206,24 @@ public class UserController {
     }
 
     @PatchMapping("/update/{id}")
-    @Operation(summary = "Change name, about, email, password, phone", description = "Change user")
+    @Operation(summary = "Update user profile details", description = "Modify specific fields of user metadata (name, email, password, phone, description)")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully changed",
+            @ApiResponse(responseCode = "200", description = "Profile updated successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"User updated successfully\"}"))),
-            @ApiResponse(responseCode = "404", description = "Not found a user",
+            @ApiResponse(responseCode = "404", description = "Not found user",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(type = "object", example = "{\"error\": \"Not found a user\"}"))),
-            @ApiResponse(responseCode = "400", description = "Invalid email or pattern phone",
+            @ApiResponse(responseCode = "400", description = "Validation failed for profile update",
             content = @Content(schema = @Schema(type = "object"), examples = {
                     @ExampleObject(
-                            name = "Email error",
+                            name = "Invalid email format",
                             value = "{\"error\": \"Write your email\"}",
-                            summary = "Invalid error"
+                            summary = "Triggered when the provided email string is invalid or empty"
                     ),
                     @ExampleObject(
-                            name = "Phone error",
+                            name = "Invalid phone format",
                             value = "{\"error\": \"Write your phone number\"}",
-                            summary = "Invalid phone"
+                            summary = "Triggered when the phone number format does not comply with system patterns"
                     )
             }))
     })
@@ -244,11 +244,11 @@ public class UserController {
 
     @PutMapping("/change_role/{userId}")
     @SecurityRequirement(name = "Playlist")
-    @Operation(summary = "Change role for user", description = "If user found and admin, then this is user can change role")
+    @Operation(summary = "Change user account role", description = "Allows an administrator to modify the authority level/role of a user")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully changed role for user",
+            @ApiResponse(responseCode = "200", description = "Account role updated successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Changed role successfully.\"}"))),
-            @ApiResponse(responseCode = "404", description = "Not found a user",
+            @ApiResponse(responseCode = "404", description = "Not found user",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"User not found with {id}\"}")))
     })
     public ResponseEntity<MessageResponse> changeRoleUser(@RequestBody Role role, @PathVariable long userId) {
@@ -259,21 +259,21 @@ public class UserController {
 
     @PostMapping(value = "/upload-avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @SecurityRequirement(name = "Playlist")
-    @Operation(summary = "Upload avatar", description = "If image successfully uploaded, display avatar for all users")
+    @Operation(summary = "Upload profile avatar image", description = "Upload a JPEG or PNG image to serve as the user's profile icon")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Avatar uploaded successfully",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Avatar uploaded successfully\"}"))),
-            @ApiResponse(responseCode = "400", description = "File does not contain image",
+            @ApiResponse(responseCode = "400", description = "Invalid image file uploaded",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object"), examples = {
                     @ExampleObject(
-                            name = "Content type file",
+                            name = "Unsupported media type",
                             value = "{\"message\": \"Invalid image or png format\"}",
-                            summary = "File can only contain png or jpg"
+                            summary = "Triggered when the uploaded file is not a JPEG or PNG format"
                     ),
                     @ExampleObject(
-                            name = "File not uploaded",
+                            name = "Missing file",
                             value = "{\"message\": \"File must not be null or empty\"}",
-                            summary = "The file must be uploaded"
+                            summary = "Triggered when the avatar multipart file is missing or has zero bytes"
                     )
             }))
     })
@@ -291,11 +291,11 @@ public class UserController {
 
     @GetMapping("/me")
     @SecurityRequirement(name = "Playlist")
-    @Operation(summary = "Info about authorization user")
+    @Operation(summary = "Get current authenticated user session", description = "Retrieve profile details for the currently logged-in user session")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User authorized",
+            @ApiResponse(responseCode = "200", description = "Session profile retrieved successfully",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserDTO.class))),
-            @ApiResponse(responseCode = "401", description = "User didn't logged")
+            @ApiResponse(responseCode = "401", description = "User is not authenticated")
     })
     public ResponseEntity<UserDTO> getCurrentUser() {
         User currentUser = userService.getCurrentUser();
@@ -307,13 +307,13 @@ public class UserController {
 
     @PostMapping("/subscribe/{id}")
     @SecurityRequirement(name = "Playlist")
-    @Operation(summary = "Subscribe to User")
+    @Operation(summary = "Subscribe to a user")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully subscribed to User",
+            @ApiResponse(responseCode = "200", description = "Successfully subscribed to a user",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"User subscribed successfully\"}"))),
             @ApiResponse(responseCode = "404", description = "User not found",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"User not found\"}"))),
-            @ApiResponse(responseCode = "403", description = "User subscribed to User",
+            @ApiResponse(responseCode = "403", description = "User subscribed to user",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"You're already subscribed!\"}")))
     })
     public ResponseEntity<MessageResponse> subscribeToUser(@PathVariable long id) {
@@ -324,13 +324,13 @@ public class UserController {
 
     @PostMapping("/unsubscribe/{id}")
     @SecurityRequirement(name = "Playlist")
-    @Operation(summary = "Unsubscribe from User")
+    @Operation(summary = "Unsubscribe from a user")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully unsubscribed from User",
+            @ApiResponse(responseCode = "200", description = "Successfully unsubscribed from user",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"User unsubscribed successfully\"}"))),
             @ApiResponse(responseCode = "404", description = "User not found",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"User not found\"}"))),
-            @ApiResponse(responseCode = "403", description = "User unsubscribed from User",
+            @ApiResponse(responseCode = "403", description = "User unsubscribed from user",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"You're not subscribed!\"}")))
     })
     public ResponseEntity<MessageResponse> unsubscribeFromUser(@PathVariable long id) {

@@ -54,7 +54,7 @@ public class SongController {
     @PostMapping(value = "/create", consumes =  MediaType.MULTIPART_FORM_DATA_VALUE)
     @SecurityRequirement(name = "Playlist")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(encoding = @Encoding(name = "requestSong", contentType = MediaType.APPLICATION_JSON_VALUE)))
-    @Operation(summary = "Create song", description = "Create song and upload song")
+    @Operation(summary = "Upload and create a new song", description = "Create a new song metadata record and upload its audio and cover image files")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Successfully uploaded song and created",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = SongDTO.class))),
@@ -63,27 +63,27 @@ public class SongController {
                     @ExampleObject(
                             name = "Empty name",
                             value = "{\"error\": \"Name must not be empty\"}",
-                            summary = "Name must not be empty"
+                            summary = "Triggered when the song name is empty"
                     ),
                     @ExampleObject(
                             name = "Null name",
                             value = "{\"error\": \"Name must not be null\"}",
-                            summary = "Null name"
+                            summary = "Triggered when the song name is missing from the request"
                     ),
                     @ExampleObject(
                             name = "Empty album",
                             value = "{\"error\": \"Album must not be empty\"}",
-                            summary = "Album"
+                            summary = "Triggered when the album field is empty"
                     ),
                     @ExampleObject(
-                            name = "Invalid content type",
+                            name = "Invalid audio format",
                             value = "{\"message\": \"Upload audio file.\"}",
-                            summary = "If file uploaded does not contain audio/mp4 or audio/mpeg"
+                            summary = "Triggered when the uploaded audio file is not MP4 or MPEG"
                     ),
                     @ExampleObject(
-                            name = "Invalid content type",
+                            name = "Invalid image format",
                             value = "{\"message\": \"Upload image file.\"}",
-                            summary = "If file uploaded does not contain audio/mp4 or audio/mpeg"
+                            summary = "Triggered when the uploaded cover image is not JPEG or PNG"
                     )
             }))
     })
@@ -110,7 +110,7 @@ public class SongController {
 
     @DeleteMapping("/delete/{id}")
     @SecurityRequirement(name = "Playlist")
-    @Operation(summary = "Delete song", description = "Delete song from application")
+    @Operation(summary = "Delete a song by ID", description = "Permanently remove a song from the application")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully deleted song",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Song {id} deleted\"}"))),
@@ -125,9 +125,9 @@ public class SongController {
     }
 
     @GetMapping("/top")
-    @Operation(summary = "Get 10 top songs", description = "Get 10 top songs by views")
+    @Operation(summary = "Retrieve top 10 songs", description = "Retrieve detailed metadata for a specific song by view listeners")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Got top 10 songs",
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved top songs",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, array = @ArraySchema(schema = @Schema(implementation = SongDTO.class)))),
     })
     public List<SongDTO> topSongs() {
@@ -135,7 +135,7 @@ public class SongController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get song", description = "Get song by id")
+    @Operation(summary = "Find a song by ID", description = "Retrieve detailed metadata for a specific song")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully found song",
             content = @Content(schema = @Schema(implementation = SongDTO.class))),
@@ -155,10 +155,10 @@ public class SongController {
     }
 
     @GetMapping("/file/{id}")
-    @Operation(summary = "Display a song", description = "Display a song and play")
+    @Operation(summary = "Stream song audio file", description = "Fetch and stream the raw audio binary for playback")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully found song and play",
-            content = @Content(mediaType = "audio/mpeg", schema = @Schema(type = "string", format = "byte"))),
+            content = @Content(mediaType = "audio/mpeg", schema = @Schema(type = "string", format = "binary"))),
             @ApiResponse(responseCode = "404", description = "Not found a song",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Song not found with {id}\"}"))),
             @ApiResponse(responseCode = "400", description = "A file not loaded",
@@ -183,9 +183,9 @@ public class SongController {
     }
 
     @GetMapping("/perweek")
-    @Operation(summary = "Get songs per week", description = "Get songs per page and week")
+    @Operation(summary = "Get paginated weekly songs", description = "Retrieve a paginated list of songs trending during the current week")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully got all songs",
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved paginated songs",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = PaginatedResponse.class)))
     })
     public ResponseEntity<PaginatedResponse> findAllPerWeek(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
@@ -193,25 +193,26 @@ public class SongController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "Find artist or album song")
+    @Operation(summary = "Search songs by artist or album")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully found artist or album",
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", implementation = SongDTO.class))),
+            @ApiResponse(responseCode = "200", description = "Find songs matching either the specified artist name, album name, or both",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, array = @ArraySchema(schema = @Schema(implementation = SongDTO.class)))),
             @ApiResponse(responseCode = "404", description = "Not found artist or album",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object"), examples = {
                     @ExampleObject(
-                            name = "Artist",
-                            value = "${\"message\": \"Song not found with {artistName}\"}",
-                            summary = "Artist not found"
+                            name = "Artist not found",
+                            value = "{\"message\": \"Song not found with {artistName}\"}",
+                            summary = "Triggered when no songs match the provided artist name"
                     ),
                     @ExampleObject(
-                            name = "Album",
-                            value = "${\"message\": \"Song not found with {albumName}\"}",
-                            summary = "Album not found"
+                            name = "Album not found",
+                            value = "{\"message\": \"Song not found with {albumName}\"}",
+                            summary = "Triggered when no songs match the provided album name"
                     ),
                     @ExampleObject(
-                            name = "Artist and Album",
-                            value = "${\"message\": \"Song not found with {artistName} and {albumName}\"}"
+                            name = "Artist and Album not found",
+                            value = "{\"message\": \"Song not found with {artistName} and {albumName}\"}",
+                            summary = "Triggered when no songs match the combination of both names"
                     )
             }))
     })
@@ -223,9 +224,9 @@ public class SongController {
 
     @GetMapping("/my-uploads")
     @SecurityRequirement(name = "Playlist")
-    @Operation(summary = "Get list uploads of songs")
+    @Operation(summary = "Get current user's uploads", description = "Retrieve a list of all songs uploaded by the currently authenticated user")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Found uploads of songs",
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved user's uploads",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
             array = @ArraySchema(schema = @Schema(implementation = SongDTO.class))))
     })
@@ -234,12 +235,12 @@ public class SongController {
     }
 
     @GetMapping("/image/{id}")
-    @Operation(summary = "Get image song")
+    @Operation(summary = "Get song cover image", description = "Fetch and display the raw binary image file for a song's cover art")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully found image and display",
+            @ApiResponse(responseCode = "200", description = "Cover image found",
             content = {
-                    @Content(mediaType = MediaType.IMAGE_JPEG_VALUE, schema = @Schema(type = "blob", format = "binary")),
-                    @Content(mediaType = MediaType.IMAGE_PNG_VALUE, schema = @Schema(type = "blob", format = "binary"))
+                    @Content(mediaType = MediaType.IMAGE_JPEG_VALUE, schema = @Schema(type = "string", format = "binary")),
+                    @Content(mediaType = MediaType.IMAGE_PNG_VALUE, schema = @Schema(type = "string", format = "binary"))
             }),
             @ApiResponse(responseCode = "404", description = "Not found song",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Song not found with {id}\"}")))

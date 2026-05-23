@@ -181,7 +181,7 @@ class PlaylistServiceTest {
     }
 
     @Test
-    void changeAvailableShouldUpdatePlaylistWhenOwnerChangesVisibility() {
+    void changeVisibilityShouldUpdatePlaylistWhenOwnerChangesVisibility() {
         User user = new User();
         user.setId(1L);
 
@@ -193,14 +193,14 @@ class PlaylistServiceTest {
         when(playlistRepository.findById(10L)).thenReturn(Optional.of(playlist));
         when(userService.getCurrentUser()).thenReturn(user);
 
-        playlistService.changeAvailable(10L, true);
+        playlistService.changeVisibility(10L, true);
 
         assertEquals(true, playlist.isPublic());
         verify(playlistRepository).save(playlist);
     }
 
     @Test
-    void changeAvailableShouldThrowWhenCurrentUserIsNotOwner() {
+    void changeVisibilityShouldThrowWhenCurrentUserIsNotOwner() {
         User owner = new User();
         owner.setId(1L);
 
@@ -216,7 +216,7 @@ class PlaylistServiceTest {
 
         AccessDeniedException exception = assertThrows(
                 AccessDeniedException.class,
-                () -> playlistService.changeAvailable(10L, true)
+                () -> playlistService.changeVisibility(10L, true)
         );
 
         assertEquals("You're can't change this playlist", exception.getMessage());
@@ -224,7 +224,7 @@ class PlaylistServiceTest {
     }
 
     @Test
-    void changeAvailableShouldDoNothingWhenVisibilityAlreadyMatches() {
+    void changeVisibilityShouldDoNothingWhenVisibilityAlreadyMatches() {
         User user = new User();
         user.setId(1L);
 
@@ -236,7 +236,7 @@ class PlaylistServiceTest {
         when(playlistRepository.findById(10L)).thenReturn(Optional.of(playlist));
         when(userService.getCurrentUser()).thenReturn(user);
 
-        playlistService.changeAvailable(10L, true);
+        playlistService.changeVisibility(10L, true);
 
         verify(playlistRepository, never()).save(playlist);
     }

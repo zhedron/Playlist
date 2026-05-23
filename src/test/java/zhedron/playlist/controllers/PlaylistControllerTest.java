@@ -111,7 +111,7 @@ class PlaylistControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Changed available true"));
 
-        verify(playlistService).changeAvailable(10L, true);
+        verify(playlistService).changeVisibility(10L, true);
     }
 
     @Test

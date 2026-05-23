@@ -55,25 +55,25 @@ public class AuthController {
     }
 
     @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Login", description = "Login with email, password and get JWT token for authorization in others resources")
+    @Operation(summary = "Authenticate user", description = "Log in with email and password to receive JWT access and refresh tokens")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully logged ang got JWT token",
+            @ApiResponse(responseCode = "200", description = "Successfully authenticated and generated tokens",
             content = @Content(mediaType = "application/json", schema = @Schema(type = "object", example = """
                     {
                       "accessToken": "{accessToken}",
                       "refreshToken": "{refreshToken}"
                     }"""))),
-            @ApiResponse(responseCode = "401", description = "Invalid login",
+            @ApiResponse(responseCode = "401", description = "Authentication failed",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object"), examples = {
                     @ExampleObject(
-                            name = "Error email or password",
+                            name = "Invalid credentials",
                             value = "{\"message\": \"Invalid email or password\"}",
-                            summary = "Email does not exist or wrong password"
+                            summary = "Triggered when the email does not exist or the password is incorrect"
                     ),
                     @ExampleObject(
                             name = "Account is blocked",
                             value = "{\"message\": \"Your account is locked\"}",
-                            summary = "The blocked user cannot log in"
+                            summary = "Triggered when the user account has been suspended or blocked"
                     )
             }))
     })
@@ -127,12 +127,12 @@ public class AuthController {
     }
 
     @PostMapping("/refreshtoken")
-    @Operation(summary = "refresh token for access token", description = "Extend access token the expiration date")
+    @Operation(summary = "Refresh authentication tokens", description = "Exchange a valid refresh token for a new access and refresh token pair to extend the session")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully extend access token the expiration date",
+            @ApiResponse(responseCode = "200", description = "Tokens successfully refreshed",
             content = @Content(schema = @Schema(implementation = TokenResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Not found a refresh token",
-            content = @Content(schema = @Schema(type = "object", example = "{\"message\": \"Refresh Token not found with {refreshToken}\"}")))
+            @ApiResponse(responseCode = "404", description = "Not found refresh token",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Refresh Token not found with {refreshToken}\"}")))
     })
     public ResponseEntity<?> refreshToken (HttpServletRequest request) {
         String token = null;
@@ -179,10 +179,10 @@ public class AuthController {
 
     @PostMapping("/auth/logout")
     @SecurityRequirement(name = "Playlist")
-    @Operation(summary = "Logout user and delete cookie")
+    @Operation(summary = "Log out user", description = "Clear authentication cookies and terminate the current user session")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully log out"),
-            @ApiResponse(responseCode = "401", description = "User didn't log")
+            @ApiResponse(responseCode = "200", description = "Successfully logged out"),
+            @ApiResponse(responseCode = "401", description = "User is not logged in")
     })
     public ResponseEntity<Void> logout() {
         ResponseCookie cookie_accessToken = ResponseCookie.from("accessToken", "")

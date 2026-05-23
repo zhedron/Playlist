@@ -88,7 +88,7 @@ public class PlaylistServiceImpl implements PlaylistService {
     }
 
     @Override
-    public void changeAvailable(long playlistId, boolean isPublic) {
+    public void changeVisibility(long playlistId, boolean isPublic) {
         Playlist playlist = playlistRepository.findById(playlistId).orElseThrow(() -> new PlaylistNotFoundException("Playlist not found with " + playlistId));
 
         User currentUser = userService.getCurrentUser();

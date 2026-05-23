@@ -34,7 +34,7 @@ public class PlaylistController {
 
     @PostMapping("/add/{songId}/{playlistId}")
     @SecurityRequirement(name = "Playlist")
-    @Operation(summary = "Add song", description = "Add song in playlist user")
+    @Operation(summary = "Add a song to the playlist", description = "Add a specific song to a user's playlist")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully added song in playlist user",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Playlist added\"}"))),
@@ -50,7 +50,7 @@ public class PlaylistController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "Find artist or album songs", description = "If found artist or album, then get songs from artist or album in playlist user")
+    @Operation(summary = "Search playlists by artist or album", description = "Retrieve user playlists that contain songs by a specific artist or album name")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully found songs artist or album from playlist user",
                     content = @Content(
@@ -62,12 +62,12 @@ public class PlaylistController {
                             @ExampleObject(
                                     name = "Not found a album or artist",
                                     value = "{\"message\": \"Artist name or album name not found\"}",
-                                    summary = "Find a album or artist in playlist user"
+                                    summary = "Triggered when no matching artist or album name exists in the database"
                             ),
                             @ExampleObject(
                                     name = "Not found a user",
                                     value = "{\"message\": \"User not found with {id}\"}",
-                                    summary = "return user if exists"
+                                    summary = "Triggered when the provided userId does not match any existing user"
                             )
                     }))
     })
@@ -79,33 +79,50 @@ public class PlaylistController {
 
     @PostMapping("/available/{playlistId}")
     @SecurityRequirement(name = "Playlist")
-    @Operation(summary = "Change to public or private playlist")
+    @Operation(summary = "Change playlist visibility", description = "Toggle playlist between public and private status")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully changed available",
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Changed available {isPublic}\"}"))),
+            @ApiResponse(responseCode = "200", description = "Successfully updated visibility",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Changed to public/private visibility\"}"))),
             @ApiResponse(responseCode = "404", description = "Not found playlist",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Playlist not found with {playlistId}\"}"))),
             @ApiResponse(responseCode = "403", description = "Forbidden",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"You're can't change this playlist\"}")))
     })
-    public ResponseEntity<MessageResponse> changeAvailable(@PathVariable long playlistId, @RequestParam("public") boolean isPublic) {
-        playlistService.changeAvailable(playlistId, isPublic);
+    public ResponseEntity<MessageResponse> changeVisibility(@PathVariable long playlistId, @RequestParam("public") boolean isPublic) {
+        playlistService.changeVisibility(playlistId, isPublic);
 
-        return ResponseEntity.ok(new MessageResponse("Changed available " + isPublic));
+        if (isPublic) {
+            return ResponseEntity.ok(new MessageResponse("Changed to public visibility"));
+        } else {
+            return ResponseEntity.ok(new MessageResponse("Changed to private visibility"));
+        }
     }
 
     @PostMapping(value = "/create")
     @SecurityRequirement(name = "Playlist")
-    @Operation(summary = "User create playlist")
+    @Operation(summary = "Create a new playlist", description = "Create a new playlist with an attached cover image")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Playlist created successfully",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Playlist created\"}"))),
             @ApiResponse(responseCode = "400", description = "Invalid file type",
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Upload image\"}")))
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object"), examples = {
+                    @ExampleObject(
+                            name = "Unsupported file format",
+                            value = "{\"message\": \"Upload image\"}",
+                            summary = "Triggered when the uploaded file is not a JPEG or PNG image"
+                    ),
+                    @ExampleObject(
+                            name = "File empty dropped",
+                            value = "{\"message\": \"File couldn't be empty\"}",
+                            summary = "Triggered when the file part is present but contains no data"
+                    )
+            }))
     })
     public ResponseEntity<MessageResponse> createPlaylist(@RequestPart PlaylistRequest playlistRequest, @RequestPart MultipartFile file) throws IOException {
-        if (!file.isEmpty() && !(file.getContentType().equals("image/jpeg") || file.getContentType().equals("image/png"))) {
+        if (!file.isEmpty() && (!file.getContentType().equals("image/jpeg") && !file.getContentType().equals("image/png"))) {
             return ResponseEntity.badRequest().body(new MessageResponse("Upload image"));
+        } else if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(new MessageResponse("File couldn't be empty"));
         }
 
         playlistService.savePlaylist(playlistRequest, file);
@@ -115,7 +132,7 @@ public class PlaylistController {
 
     @DeleteMapping("/delete/{id}")
     @SecurityRequirement(name = "Playlist")
-    @Operation(summary = "Delete playlist")
+    @Operation(summary = "Delete a playlist by ID", description = "Remove an existing playlist from the system")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully deleted playlist",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Playlist deleted successfully\"}"))),

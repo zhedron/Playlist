@@ -15,7 +15,7 @@ public interface PlaylistService {
 
     List<PlaylistDTO> getPlaylistsByArtistNameOrAlbumName(String artistName, String albumName, long userId);
 
-    void changeAvailable(long playlistId, boolean isPublic);
+    void changeVisibility(long playlistId, boolean isPublic);
 
     void deletePlaylist(long playlistId);
 }
