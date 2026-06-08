@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +22,7 @@ import zhedron.playlist.dto.response.MessageResponse;
 import zhedron.playlist.services.PlaylistService;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.List;
 
 @RestController
@@ -43,8 +46,8 @@ public class PlaylistController {
             @ApiResponse(responseCode = "403", description = "Can't song to playlist",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"You're can't add this song to this playlist\"}")))
     })
-    public ResponseEntity<MessageResponse> addPlayList(@PathVariable long songId, @RequestParam(name = "public") boolean isPublic, @PathVariable long playlistId) {
-        playlistService.addSong(songId, isPublic, playlistId);
+    public ResponseEntity<MessageResponse> addPlayList(@PathVariable long songId, @PathVariable long playlistId) {
+        playlistService.addSong(songId, playlistId);
 
         return ResponseEntity.ok(new MessageResponse("Playlist added"));
     }
@@ -145,5 +148,23 @@ public class PlaylistController {
         playlistService.deletePlaylist(id);
 
         return ResponseEntity.ok(new MessageResponse("Playlist deleted successfully"));
+    }
+
+    @GetMapping("/image/{id}")
+    public ResponseEntity<Resource> getImage(@PathVariable long id) throws MalformedURLException {
+        PlaylistDTO playlistDTO = playlistService.findPlaylistById(id);
+
+        Resource resource = new UrlResource(playlistDTO.imageURL());
+
+        if (!resource.exists()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType(playlistDTO.contentType())).body(resource);
+    }
+
+    @GetMapping("/{playlistId}/{userId}")
+    public ResponseEntity<PlaylistDTO> getPlaylist(@PathVariable long playlistId, @PathVariable long userId) {
+        return ResponseEntity.ok(playlistService.getPlaylist(playlistId, userId));
     }
 }

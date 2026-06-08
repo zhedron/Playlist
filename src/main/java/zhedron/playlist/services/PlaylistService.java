@@ -11,11 +11,15 @@ import java.util.List;
 public interface PlaylistService {
     void savePlaylist(PlaylistRequest playlistRequest, MultipartFile file) throws IOException;
 
-    void addSong(long idSong, boolean isPublic, long playlistId);
+    void addSong(long idSong, long playlistId);
 
     List<PlaylistDTO> getPlaylistsByArtistNameOrAlbumName(String artistName, String albumName, long userId);
 
     void changeVisibility(long playlistId, boolean isPublic);
 
     void deletePlaylist(long playlistId);
+
+    PlaylistDTO findPlaylistById(long playlistId);
+
+    PlaylistDTO getPlaylist(long playlistId, long userId);
 }

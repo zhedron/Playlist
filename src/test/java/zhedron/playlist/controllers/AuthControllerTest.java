@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,13 +14,18 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import zhedron.playlist.config.SecurityConfig;
 import zhedron.playlist.config.filter.JwtFilter;
 import zhedron.playlist.dto.request.LoginRequest;
 import zhedron.playlist.entity.RefreshToken;
 import zhedron.playlist.entity.User;
+import zhedron.playlist.repository.UserRepository;
+import zhedron.playlist.services.CustomOauth2UserService;
 import zhedron.playlist.services.JwtService;
 import zhedron.playlist.services.RefreshTokenService;
 import zhedron.playlist.services.UserService;
+import zhedron.playlist.services.impl.UserDetailsImpl;
+import zhedron.playlist.success.handlers.GoogleSuccessHandler;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AuthController.class)
-@AutoConfigureMockMvc(addFilters = false)
+@Import(SecurityConfig.class)
 class AuthControllerTest {
 
     @Autowired
@@ -43,11 +48,22 @@ class AuthControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockitoBean
     private JwtFilter jwtFilter;
 
     @MockitoBean
     private JwtService jwtService;
+
+    @MockitoBean
+    private CustomOauth2UserService oauth2UserService;
+
+    @MockitoBean
+    private GoogleSuccessHandler googleSuccessHandler;
+
+    @MockitoBean
+    private UserRepository userRepository;
+
+    @MockitoBean
+    private UserDetailsImpl userDetails;
 
     @MockitoBean
     private UserService userService;

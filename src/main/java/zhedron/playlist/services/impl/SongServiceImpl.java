@@ -143,14 +143,14 @@ public class SongServiceImpl implements SongService {
     public List<SongDTO> getTopSongs() {
         List<Song> songs = songRepository.findAll();
 
-        List<Song> topSongs = songs.stream().sorted(Comparator.comparingLong(Song::getViews).reversed()).limit(10).collect(Collectors.toList());
+        List<Song> topSongs = songs.stream().sorted(Comparator.comparingLong(Song::getListeners).reversed()).limit(10).collect(Collectors.toList());
 
         return songMapper.songToSongDTOList(topSongs);
     }
 
     @Override
     public PaginatedResponse findAllPerWeek(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("views").descending());
+        Pageable pageable = PageRequest.of(page, size, Sort.by("listeners").descending());
 
         Page<Song> songPage = songRepository.findAll(pageable);
 

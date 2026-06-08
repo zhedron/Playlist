@@ -4,12 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import zhedron.playlist.config.SecurityConfig;
 import zhedron.playlist.config.filter.JwtFilter;
 import zhedron.playlist.dto.PlaylistDTO;
 import zhedron.playlist.dto.SongDTO;
@@ -24,9 +26,10 @@ import zhedron.playlist.exceptions.PlaylistNotFoundException;
 import zhedron.playlist.exceptions.SubscribedException;
 import zhedron.playlist.exceptions.UserNotFoundException;
 import zhedron.playlist.mapper.UserMapper;
-import zhedron.playlist.services.AESEncryptionService;
-import zhedron.playlist.services.SubscriptionService;
-import zhedron.playlist.services.UserService;
+import zhedron.playlist.repository.UserRepository;
+import zhedron.playlist.services.*;
+import zhedron.playlist.services.impl.UserDetailsImpl;
+import zhedron.playlist.success.handlers.GoogleSuccessHandler;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -47,7 +50,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserController.class)
-@AutoConfigureMockMvc(addFilters = false)
+@Import(SecurityConfig.class)
 class UserControllerTest {
 
     @Autowired
@@ -56,8 +59,10 @@ class UserControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockitoBean
     private JwtFilter jwtFilter;
+
+    @MockitoBean
+    private JwtService jwtService;
 
     @MockitoBean
     private UserService userService;
@@ -70,6 +75,18 @@ class UserControllerTest {
 
     @MockitoBean
     private SubscriptionService subscriptionService;
+
+    @MockitoBean
+    private CustomOauth2UserService oauth2UserService;
+
+    @MockitoBean
+    private GoogleSuccessHandler googleSuccessHandler;
+
+    @MockitoBean
+    private UserRepository userRepository;
+
+    @MockitoBean
+    private UserDetailsImpl userDetails;
 
     private User user;
     private UserDTO userDTO;
@@ -144,6 +161,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test", password = "test", authorities = "ADMIN")
     void blockUserShouldReturnSuccessMessage() throws Exception {
         mockMvc.perform(put("/user/block/1"))
                 .andExpect(status().isOk())
@@ -153,6 +171,14 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test", password = "test")
+    void blockUserShouldReturnIfUserNotAdmin() throws Exception {
+        mockMvc.perform(put("/user/block/1"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "test", password = "test")
     void updateUserShouldReturnSuccessMessage() throws Exception {
         UserUpdateRequest request = new UserUpdateRequest();
         request.setEmail("updated@test.com");
@@ -168,6 +194,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test", password = "test", authorities = "ADMIN")
     void changeRoleShouldReturnSuccessMessage() throws Exception {
         mockMvc.perform(put("/user/change_role/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -179,6 +206,14 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test", password = "test")
+    void changeRoleShouldReturnIfUserNotAdmin() throws Exception {
+        mockMvc.perform(put("/user/change_role/1"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "test", password = "test")
     void uploadAvatarShouldRejectInvalidContentType() throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "audio.mp3", "audio/mpeg", "audio".getBytes());
 
@@ -188,6 +223,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test", password = "test")
     void uploadAvatarShouldRejectEmptyFile() throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "", MediaType.IMAGE_PNG_VALUE, new byte[0]);
 
@@ -197,6 +233,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test", password = "test")
     void deleteSongFromPlaylistShouldReturnSuccessMessage() throws Exception {
         mockMvc.perform(delete("/user/playlist/delete/1/2"))
                 .andExpect(status().isOk())
@@ -206,6 +243,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test", password = "test")
     void deleteSongFromPlaylistShouldReturnPlaylistNotFound() throws Exception {
         doThrow(new PlaylistNotFoundException("Playlist not found with 1"))
                 .when(userService).deleteSongFromPlaylist(1L, 2L);
@@ -229,6 +267,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test", password = "test")
     void subscribeToUserShouldReturnSuccessMessage() throws Exception {
         mockMvc.perform(post("/user/subscribe/2"))
                 .andExpect(status().isOk())
@@ -238,6 +277,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test", password = "test")
     void subscribeToUserShouldReturnForbiddenWhenAlreadySubscribed() throws Exception {
         doThrow(new SubscribedException("You're already subscribed!"))
                 .when(subscriptionService).subscribeToUser(2L);
@@ -248,6 +288,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test", password = "test")
     void unsubscribeFromUserShouldReturnSuccessMessage() throws Exception {
         mockMvc.perform(post("/user/unsubscribe/2"))
                 .andExpect(status().isOk())
@@ -257,6 +298,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test", password = "test")
     void unsubscribeFromUserShouldReturnForbiddenWhenNotSubscribed() throws Exception {
         doThrow(new SubscribedException("You're not subscribed!"))
                 .when(subscriptionService).unsubscribeFromUser(2L);

@@ -3,6 +3,7 @@ package zhedron.playlist.services;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 import zhedron.playlist.dto.PlaylistDTO;
+import zhedron.playlist.dto.SubscriptionDTO;
 import zhedron.playlist.dto.request.UserRequest;
 import zhedron.playlist.dto.request.UserUpdateRequest;
 import zhedron.playlist.entity.User;
@@ -34,4 +35,6 @@ public interface UserService {
     void changeRole(Role role, long userId);
 
     void uploadAvatar(MultipartFile file) throws IOException;
+
+    List<SubscriptionDTO> getSubscriptions(long userId);
 }

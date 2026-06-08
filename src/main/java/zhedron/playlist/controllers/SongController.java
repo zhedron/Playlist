@@ -145,7 +145,7 @@ public class SongController {
     public SongDTO findSongById(@PathVariable long id) {
         Song song = songService.getSongById(id);
 
-        song.setViews(song.getViews() + 1);
+        song.setListeners(song.getListeners() + 1);
 
         System.out.println(song.getCreator().getId());
 
@@ -172,7 +172,7 @@ public class SongController {
 
             Resource resource = new UrlResource(path.toUri());
 
-            song.setViews(song.getViews() + 1);
+            song.setListeners(song.getListeners() + 1);
 
             songRepository.save(song);
 

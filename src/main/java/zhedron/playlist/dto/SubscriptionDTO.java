@@ -1,5 +1,5 @@
 package zhedron.playlist.dto;
 
 public record SubscriptionDTO(long id, long userId, String name,
-                              String about, String profilePicture, String contentType) {
+                              String profilePicture, String contentType) {
 }

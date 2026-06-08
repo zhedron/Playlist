@@ -10,4 +10,6 @@ import java.util.List;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = SongMapper.class)
 public interface PlaylistMapper {
     List<PlaylistDTO> toPlaylistDTO(List<Playlist> playlists);
+
+    PlaylistDTO toPlaylistDTO(Playlist playlist);
 }

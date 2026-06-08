@@ -10,17 +10,21 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import zhedron.playlist.dto.PlaylistDTO;
+import zhedron.playlist.dto.SubscriptionDTO;
 import zhedron.playlist.dto.UserDTO;
 import zhedron.playlist.dto.request.UserRequest;
 import zhedron.playlist.dto.request.UserUpdateRequest;
 import zhedron.playlist.entity.Playlist;
 import zhedron.playlist.entity.Song;
+import zhedron.playlist.entity.Subscription;
 import zhedron.playlist.entity.User;
 import zhedron.playlist.enums.Provider;
 import zhedron.playlist.enums.Role;
 import zhedron.playlist.exceptions.*;
+import zhedron.playlist.mapper.SubscriptionMapper;
 import zhedron.playlist.mapper.UserMapper;
 import zhedron.playlist.repository.PlaylistRepository;
+import zhedron.playlist.repository.SubscriptionRepository;
 import zhedron.playlist.repository.UserRepository;
 import zhedron.playlist.services.AESEncryptionService;
 import zhedron.playlist.services.EmailService;
@@ -42,6 +46,8 @@ public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
 
+    private final SubscriptionMapper subscriptionMapper;
+
     private final PlaylistRepository playlistRepository;
 
     private final AESEncryptionService aesEncryptionService;
@@ -49,15 +55,18 @@ public class UserServiceImpl implements UserService {
     private final EmailService emailService;
 
     private final String PATH = "profile_image/";
+    private final SubscriptionRepository subscriptionRepository;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, UserMapper userMapper, PlaylistRepository playlistRepository, AESEncryptionService aesEncryptionService, EmailService emailService) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, UserMapper userMapper, SubscriptionMapper subscriptionMapper, PlaylistRepository playlistRepository, AESEncryptionService aesEncryptionService, EmailService emailService, SubscriptionRepository subscriptionRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
+        this.subscriptionMapper = subscriptionMapper;
         this.playlistRepository = playlistRepository;
         this.aesEncryptionService = aesEncryptionService;
         this.emailService = emailService;
+        this.subscriptionRepository = subscriptionRepository;
     }
 
     @Override
@@ -286,5 +295,12 @@ public class UserServiceImpl implements UserService {
         }
 
         userRepository.save(user);
+    }
+
+    @Override
+    public List<SubscriptionDTO> getSubscriptions(long subscriberId) {
+        List<Subscription> subscriptions = subscriptionRepository.getSubscriptionsBySubscriberId(subscriberId);
+
+        return subscriptionMapper.toSubscriptionsDTO(subscriptions);
     }
 }

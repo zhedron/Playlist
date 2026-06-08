@@ -20,7 +20,7 @@ public class Song {
     @Column(nullable = false)
     private String albumName;
 
-    private long views;
+    private long listeners;
 
     @ManyToOne
     @JoinColumn(name = "creator_id")

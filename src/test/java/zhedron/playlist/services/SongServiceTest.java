@@ -137,21 +137,21 @@ class SongServiceTest {
     void getTopSongsShouldReturnSongsSortedByViews() {
         Song first = new Song();
         first.setId(1L);
-        first.setViews(10L);
+        first.setListeners(10L);
 
         Song second = new Song();
         second.setId(2L);
-        second.setViews(50L);
+        second.setListeners(50L);
 
         Song third = new Song();
         third.setId(3L);
-        third.setViews(20L);
+        third.setListeners(20L);
 
         when(songRepository.findAll()).thenReturn(List.of(first, second, third));
         when(songMapper.songToSongDTOList(anyList())).thenAnswer(invocation -> {
             List<Song> songs = invocation.getArgument(0);
             return songs.stream()
-                    .map(song -> new SongDTO(song.getId(), null, null, song.getViews(), null, null, null, 0, null, null, null, 0L))
+                    .map(song -> new SongDTO(song.getId(), null, null, song.getListeners(), null, null, null, 0, null, null, null, 0L))
                     .toList();
         });
 
@@ -160,5 +160,86 @@ class SongServiceTest {
         assertEquals(2L, result.get(0).id());
         assertEquals(3L, result.get(1).id());
         assertEquals(1L, result.get(2).id());
+    }
+
+    @Test
+    void findByArtistNameOrAlbumNameShouldReturnSongs() {
+        Song song = new Song();
+        song.setId(1L);
+        song.setArtistName("artist");
+        song.setAlbumName("album");
+
+        SongDTO songDTO = new SongDTO(1L, "artist", "album", 0L, null, null, null, 0, null, null, null, 0L);
+
+        when(songRepository.findByArtistNameOrAlbumName("artist", "album")).thenReturn(List.of(song));
+        when(songMapper.songToSongDTOList(List.of(song))).thenReturn(List.of(songDTO));
+
+        List<SongDTO> result = songService.findByArtistNameOrAlbumName("artist", "album");
+
+        assertEquals(1, result.size());
+        assertEquals("artist", result.get(0).artistName());
+        assertEquals("album", result.get(0).albumName());
+    }
+
+    @Test
+    void findByArtistNameOrAlbumNameShouldThrowNotFoundWhenArtistNotFound() {
+        when(songRepository.findByArtistNameOrAlbumName("artist", null)).thenReturn(List.of());
+
+        SongNotFoundException exception = assertThrows(
+                SongNotFoundException.class,
+                () -> songService.findByArtistNameOrAlbumName("artist", null));
+
+        assertEquals("Song not found with artist", exception.getMessage());
+    }
+
+    @Test
+    void findByArtistNameOrAlbumNameShouldThrowNotFoundWhenAlbumNotFound() {
+        when(songRepository.findByArtistNameOrAlbumName(null, "album")).thenReturn(List.of());
+
+        SongNotFoundException exception = assertThrows(
+                SongNotFoundException.class,
+                () -> songService.findByArtistNameOrAlbumName(null, "album"));
+
+        assertEquals("Song not found with album", exception.getMessage());
+    }
+
+    @Test
+    void findByArtistNameOrAlbumNameShouldThrowNotFoundWhenBothNotFound() {
+        when(songRepository.findByArtistNameOrAlbumName("artist", "album")).thenReturn(List.of());
+
+        SongNotFoundException exception = assertThrows(
+                SongNotFoundException.class,
+                () -> songService.findByArtistNameOrAlbumName("artist", "album"));
+
+        assertEquals("Song not found with artist and album", exception.getMessage());
+    }
+
+    @Test
+    void getAllUploadsByUsersShouldReturnSongs() {
+        User currentUser = new User();
+        currentUser.setId(10L);
+
+        Song song = new Song();
+        song.setId(1L);
+        song.setCreator(currentUser);
+
+        Song song2 = new Song();
+        song2.setId(2L);
+        song2.setCreator(currentUser);
+
+        List<Song> songs = List.of(song, song2);
+
+        SongDTO songDTO1 = new SongDTO(1L, null, null, 0L, null, null, null, 0, null, null, null, 0L);
+        SongDTO songDTO2 = new SongDTO(2L, null, null, 0L, null, null, null, 0, null, null, null, 0L);
+
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(songRepository.findAllByCreator(currentUser)).thenReturn(songs);
+        when(songMapper.songToSongDTOList(songs)).thenReturn(List.of(songDTO1, songDTO2));
+
+        List<SongDTO> result = songService.findAllByMyUploads();
+
+        assertEquals(2, result.size());
+        assertEquals(1L, result.get(0).id());
+        assertEquals(2L, result.get(1).id());
     }
 }

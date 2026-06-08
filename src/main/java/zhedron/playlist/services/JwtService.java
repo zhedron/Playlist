@@ -26,6 +26,7 @@ public class JwtService {
                 .subject(user.getEmail())
                 .claim("roles", user.getRole().name())
                 .claim("id", user.getId())
+                .claim("blocked", user.isBlocked())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSighKey())
@@ -38,7 +39,7 @@ public class JwtService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    private Claims getAllClaims(String token) {
+    public Claims getAllClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getSighKey())
                 .build()

@@ -3,12 +3,14 @@ package zhedron.playlist.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import zhedron.playlist.config.SecurityConfig;
 import zhedron.playlist.config.filter.JwtFilter;
 import zhedron.playlist.dto.SongDTO;
 import zhedron.playlist.dto.request.SongRequest;
@@ -20,7 +22,10 @@ import zhedron.playlist.exceptions.SongNotFoundException;
 import zhedron.playlist.exceptions.UserNotEnoughPermissionsException;
 import zhedron.playlist.mapper.SongMapper;
 import zhedron.playlist.repository.SongRepository;
-import zhedron.playlist.services.SongService;
+import zhedron.playlist.repository.UserRepository;
+import zhedron.playlist.services.*;
+import zhedron.playlist.services.impl.UserDetailsImpl;
+import zhedron.playlist.success.handlers.GoogleSuccessHandler;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,7 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SongController.class)
-@AutoConfigureMockMvc(addFilters = false)
+@Import(SecurityConfig.class)
 class SongControllerTest {
 
     @Autowired
@@ -46,8 +51,22 @@ class SongControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockitoBean
     private JwtFilter jwtFilter;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private CustomOauth2UserService oauth2UserService;
+
+    @MockitoBean
+    private GoogleSuccessHandler googleSuccessHandler;
+
+    @MockitoBean
+    private UserRepository userRepository;
+
+    @MockitoBean
+    private UserDetailsImpl userDetails;
 
     @MockitoBean
     private SongService songService;
@@ -65,7 +84,7 @@ class SongControllerTest {
 
         Song song = new Song();
         song.setId(1L);
-        song.setViews(2L);
+        song.setListeners(2L);
         song.setCreator(creator);
 
         SongDTO songDTO = new SongDTO(1L, "artist", "album", 3L, LocalDateTime.now(), "audio/mpeg", "track.mp3", 120, Type.SINGLE, null, null, 42L);
@@ -91,6 +110,7 @@ class SongControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test", password = "test")
     void createSongShouldReturnCreatedSongs() throws Exception {
         SongRequest songRequest = new SongRequest();
         songRequest.setArtistName("artist");
@@ -115,6 +135,7 @@ class SongControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test", password = "test")
     void createSongShouldRejectInvalidAudioContentType() throws Exception {
         SongRequest songRequest = new SongRequest();
         songRequest.setArtistName("artist");
@@ -133,6 +154,7 @@ class SongControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test", password = "test")
     void deleteSongShouldReturnSuccessMessage() throws Exception {
         mockMvc.perform(delete("/song/delete/1"))
                 .andExpect(status().isOk())
@@ -142,6 +164,7 @@ class SongControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test", password = "test")
     void deleteSongShouldReturnPermissionsError() throws Exception {
         doThrow(new UserNotEnoughPermissionsException("You do not have enough permissions to delete this song"))
                 .when(songService).deleteSongById(1L);
@@ -160,7 +183,7 @@ class SongControllerTest {
         mockMvc.perform(get("/song/top"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(3))
-                .andExpect(jsonPath("$[0].views").value(99));
+                .andExpect(jsonPath("$[0].listeners").value(99));
     }
 
     @Test

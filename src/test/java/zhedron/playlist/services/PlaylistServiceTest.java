@@ -10,6 +10,7 @@ import zhedron.playlist.dto.SongDTO;
 import zhedron.playlist.entity.Playlist;
 import zhedron.playlist.entity.Song;
 import zhedron.playlist.entity.User;
+import zhedron.playlist.enums.Role;
 import zhedron.playlist.exceptions.AccessDeniedException;
 import zhedron.playlist.exceptions.PlaylistNotFoundException;
 import zhedron.playlist.exceptions.UserNotFoundException;
@@ -72,7 +73,7 @@ class PlaylistServiceTest {
         when(userService.getCurrentUser()).thenReturn(user);
         when(playlistRepository.findById(10L)).thenReturn(Optional.of(playlist));
 
-        playlistService.addSong(5L, true, 10L);
+        playlistService.addSong(5L, 10L);
 
         assertEquals(1, user.getPlaylists().size());
         assertEquals(1, playlist.getSongs().size());
@@ -96,7 +97,7 @@ class PlaylistServiceTest {
 
         PlaylistNotFoundException exception = assertThrows(
                 PlaylistNotFoundException.class,
-                () -> playlistService.addSong(5L, true, 10L)
+                () -> playlistService.addSong(5L, 10L)
         );
 
         assertEquals("Playlist not found", exception.getMessage());
@@ -130,7 +131,7 @@ class PlaylistServiceTest {
 
         AccessDeniedException exception = assertThrows(
                 AccessDeniedException.class,
-                () -> playlistService.addSong(5L, true, 10L)
+                () -> playlistService.addSong(5L, 10L)
         );
 
         assertEquals("You're can't add this song to this playlist", exception.getMessage());
@@ -297,5 +298,109 @@ class PlaylistServiceTest {
 
         assertEquals("You can't delete this playlist", exception.getMessage());
         verify(playlistRepository, never()).delete(playlist);
+    }
+
+    @Test
+    void getPlaylistShouldReturnMappedPlaylist() {
+        User current = new User();
+        current.setId(1L);
+
+        User user = new User();
+        user.setId(2L);
+
+        Playlist playlist = new Playlist();
+        playlist.setId(10L);
+        playlist.setUser(current);
+        playlist.setPublic(false);
+
+        user.setPlaylists(List.of(playlist));
+
+        PlaylistDTO playlistDTO = new PlaylistDTO(10L, null, 0, 0, false, 0, null, null, null, null);
+
+        when(userService.getById(2L)).thenReturn(user);
+        when(userService.getCurrentUser()).thenReturn(current);
+        when(playlistRepository.findById(10L)).thenReturn(Optional.of(playlist));
+        when(playlistMapper.toPlaylistDTO(playlist)).thenReturn(playlistDTO);
+
+        PlaylistDTO result = playlistService.getPlaylist(10L, 2L);
+
+        assertEquals(playlistDTO, result);
+        assertEquals(10L, result.id());
+    }
+
+    @Test
+    void getPlaylistShouldThrowNotFoundPlaylist() {
+        User current = new User();
+        current.setId(1L);
+
+        User user = new User();
+        user.setId(2L);
+
+        when(userService.getById(2L)).thenReturn(user);
+        when(userService.getCurrentUser()).thenReturn(current);
+        when(playlistRepository.findById(10L)).thenReturn(Optional.empty());
+
+        PlaylistNotFoundException exception = assertThrows(
+                PlaylistNotFoundException.class,
+                () -> playlistService.getPlaylist(10L, 2L));
+
+        assertEquals("Playlist not found with 10", exception.getMessage());
+    }
+
+    @Test
+    void getPlaylistShouldThrowExceptionIfUserNotAdmin() {
+        User current = new User();
+        current.setId(1L);
+        current.setRole(Role.USER);
+
+        User user = new User();
+        user.setId(2L);
+
+        Playlist playlist = new Playlist();
+        playlist.setId(10L);
+        playlist.setUser(user);
+        playlist.setPublic(false);
+
+        user.setPlaylists(List.of(playlist));
+
+        when(userService.getById(2L)).thenReturn(user);
+        when(userService.getCurrentUser()).thenReturn(current);
+        when(playlistRepository.findById(10L)).thenReturn(Optional.of(playlist));
+
+
+        AccessDeniedException exception = assertThrows(
+                AccessDeniedException.class,
+                () -> playlistService.getPlaylist(10L, 2L)
+        );
+        assertEquals("You're can't get this playlist", exception.getMessage());
+    }
+
+    @Test
+    void getPlaylistShouldThrowNotFoundWhenUserDoesNotHavePlaylist() {
+        User current = new User();
+        current.setId(1L);
+
+        User user = new User();
+        user.setId(2L);
+
+        Playlist playlist = new Playlist();
+        playlist.setId(10L);
+        playlist.setUser(user);
+        playlist.setPublic(false);
+
+        Playlist playlist1 = new Playlist();
+        playlist1.setId(11L);
+
+        user.setPlaylists(List.of(playlist1));
+
+        when(userService.getById(2L)).thenReturn(user);
+        when(userService.getCurrentUser()).thenReturn(current);
+        when(playlistRepository.findById(10L)).thenReturn(Optional.of(playlist));
+
+        PlaylistNotFoundException exception = assertThrows(
+                PlaylistNotFoundException.class,
+                () -> playlistService.getPlaylist(10L, 2L));
+
+        assertEquals("Playlist not found with 10", exception.getMessage());
     }
 }

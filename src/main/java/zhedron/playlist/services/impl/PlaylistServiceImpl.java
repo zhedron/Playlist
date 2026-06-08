@@ -8,6 +8,7 @@ import zhedron.playlist.dto.request.PlaylistRequest;
 import zhedron.playlist.entity.Playlist;
 import zhedron.playlist.entity.Song;
 import zhedron.playlist.entity.User;
+import zhedron.playlist.enums.Role;
 import zhedron.playlist.exceptions.AccessDeniedException;
 import zhedron.playlist.exceptions.PlaylistNotFoundException;
 import zhedron.playlist.exceptions.UserNotFoundException;
@@ -46,7 +47,7 @@ public class PlaylistServiceImpl implements PlaylistService {
     }
 
     @Override
-    public void addSong(long idSong, boolean isPublic, long playlistId) {
+    public void addSong(long idSong, long playlistId) {
         Song song = songService.getSongById(idSong);
 
         User user = userService.getCurrentUser();
@@ -150,5 +151,38 @@ public class PlaylistServiceImpl implements PlaylistService {
         playlistRepository.delete(playlist);
 
         log.info("Playlist deleted successfully {}", playlistId);
+    }
+
+    @Override
+    public PlaylistDTO findPlaylistById(long playlistId) {
+        Playlist playlist = playlistRepository.findById(playlistId).orElseThrow(() -> new PlaylistNotFoundException("Playlist not found with " + playlistId));
+
+        return playlistMapper.toPlaylistDTO(playlist);
+    }
+
+    @Override
+    public PlaylistDTO getPlaylist(long playlistId, long userId) {
+        User user = userService.getById(userId);
+
+        User currentUser = userService.getCurrentUser();
+
+        Playlist playlist = playlistRepository.findById(playlistId).orElseThrow(() -> new PlaylistNotFoundException("Playlist not found with " + playlistId));
+
+        checkAccess(currentUser, playlist, user, playlistId);
+
+        return playlistMapper.toPlaylistDTO(playlist);
+    }
+
+    private void checkAccess(User currentUser, Playlist playlist, User user, long playlistId) {
+        if (!user.getPlaylists().contains(playlist)) {
+            throw new PlaylistNotFoundException("Playlist not found with " + playlistId);
+        }
+
+        boolean isOwner = playlist.getUser().equals(currentUser);
+        boolean isAdmin = currentUser.getRole().equals(Role.ADMIN);
+
+        if (!playlist.isPublic() && !isOwner && !isAdmin) {
+            throw new AccessDeniedException("You're can't get this playlist");
+        }
     }
 }
