@@ -130,6 +130,7 @@ public class PlaylistServiceImpl implements PlaylistService {
         playlist.setPublic(playlistRequest.isPublic());
         playlist.setImageURL(fileName);
         playlist.setContentType(contentType);
+        playlist.setCreatedAt(LocalDateTime.now());
 
         user.getPlaylists().add(playlist);
 
