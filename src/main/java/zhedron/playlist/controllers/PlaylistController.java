@@ -151,6 +151,14 @@ public class PlaylistController {
     }
 
     @GetMapping("/image/{id}")
+    @SecurityRequirement(name = "Playlist")
+    @Operation(summary = "Get playlist cover image", description = "Returns the cover image of the playlist by its ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Image retrieved successfully",
+            content = @Content(mediaType = "image/*")),
+            @ApiResponse(responseCode = "403", description = "Forbidden playlist",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"You're can't find this playlist\"}")))
+    })
     public ResponseEntity<Resource> getImage(@PathVariable long id) throws MalformedURLException {
         PlaylistDTO playlistDTO = playlistService.findPlaylistById(id);
 
@@ -164,6 +172,27 @@ public class PlaylistController {
     }
 
     @GetMapping("/{playlistId}/{userId}")
+    @SecurityRequirement(name = "Playlist")
+    @Operation(summary = "Get playlist by ID", description = "Returns playlist with songs for the specified user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Playlist retrieved successfully",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = PlaylistDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Playlist or user not found",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, examples = {
+                    @ExampleObject(
+                            name = "User not found",
+                            value = "{\"message\": \"User not found with {id}\"}",
+                            summary = "Triggered when user not found"
+                    ),
+                    @ExampleObject(
+                            name = "Playlist not found",
+                            value = "{\"message\": \"Playlist not found with {id}\"}",
+                            summary = "Triggered when playlist not found"
+                    )
+            })),
+            @ApiResponse(responseCode = "403", description = "Access denied — playlist is private",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"You're can't get this playlist\"}")))
+    })
     public ResponseEntity<PlaylistDTO> getPlaylist(@PathVariable long playlistId, @PathVariable long userId) {
         return ResponseEntity.ok(playlistService.getPlaylist(playlistId, userId));
     }

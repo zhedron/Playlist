@@ -341,6 +341,12 @@ public class UserController {
     }
 
     @GetMapping("/subscriptions/{userId}")
+    @SecurityRequirement(name = "Playlist")
+    @Operation(summary = "Get user subscriptions", description = "Returns a list of subscriptions for the specified user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Subscriptions retrieved successfully",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, array =  @ArraySchema(schema = @Schema(implementation = SubscriptionDTO.class))))
+    })
     public ResponseEntity<List<SubscriptionDTO>> getSubscriptions(@PathVariable long userId) {
         return ResponseEntity.ok(userService.getSubscriptions(userId));
     }

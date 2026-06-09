@@ -158,6 +158,10 @@ public class PlaylistServiceImpl implements PlaylistService {
     public PlaylistDTO findPlaylistById(long playlistId) {
         Playlist playlist = playlistRepository.findById(playlistId).orElseThrow(() -> new PlaylistNotFoundException("Playlist not found with " + playlistId));
 
+        if (!playlist.isPublic()) {
+            throw new AccessDeniedException("You're can't find this playlist");
+        }
+
         return playlistMapper.toPlaylistDTO(playlist);
     }
 
