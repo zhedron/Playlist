@@ -15,6 +15,7 @@ Simple Playlist application with users, songs and playlist.
 * **Swagger OpenAPI**
 * **Docker**
 * **Java Sender Mail**
+* **Redis**
 
 # Getting Started
 

@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.audio.AudioHeader;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -118,13 +120,17 @@ public class SongServiceImpl implements SongService {
     }
 
     @Override
-    public Song getSongById(long id) {
-        return songRepository.findById(id).orElseThrow(() -> new SongNotFoundException("Song not found with " + id));
+    @Cacheable(value = "songs", key = "#id")
+    public SongDTO getSongById(long id) {
+        Song song = songRepository.findById(id).orElseThrow(() -> new SongNotFoundException("Song not found with " + id));
+
+        return songMapper.songToSongDTO(song);
     }
 
     @Override
+    @CacheEvict(value = "songs", key = "#id")
     public void deleteSongById(long id) {
-        Song song = getSongById(id);
+        Song song = songRepository.findById(id).orElseThrow(() -> new SongNotFoundException("Song not found with " + id));
 
         User currentUser = userService.getCurrentUser();
 

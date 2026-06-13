@@ -12,6 +12,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import zhedron.playlist.dto.PlaylistDTO;
 import zhedron.playlist.dto.SongDTO;
+import zhedron.playlist.dto.UserDTO;
 import zhedron.playlist.dto.request.UserRequest;
 import zhedron.playlist.dto.request.UserUpdateRequest;
 import zhedron.playlist.entity.Playlist;
@@ -38,8 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -81,11 +81,14 @@ class UserServiceTest {
         User user = new User();
         user.setId(1L);
 
+        UserDTO userDTO = new UserDTO(user.getId(), null, null, null, List.of(), false, null, null, null, null, null, null, false, null, List.of());
+
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userMapper.userToUserDTO(user)).thenReturn(userDTO);
 
-        User result = userService.getById(1L);
+        UserDTO result = userService.getById(1L);
 
-        assertEquals(1L, result.getId());
+        assertEquals(1L, result.id());
     }
 
     @Test
@@ -143,6 +146,8 @@ class UserServiceTest {
         User user = new User();
         user.setId(1L);
 
+        UserDTO userDTO = new UserDTO(user.getId(), null, null, null, List.of(), false, null, null, null, null, null, null, false, null, List.of());
+
         Song song = new Song();
         song.setId(7L);
         song.setArtistName("artist");
@@ -171,6 +176,7 @@ class UserServiceTest {
         );
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userMapper.userToUserDTO(user)).thenReturn(userDTO);
         when(userRepository.findByUserId(1L)).thenReturn(List.of(playlist));
         when(userMapper.playlistToPlaylistDTO(playlist)).thenReturn(playlistDTO);
 
@@ -192,6 +198,8 @@ class UserServiceTest {
         targetUser.setEmail("old@test.com");
         targetUser.setPassword("old-password");
 
+        UserDTO userDTO = new UserDTO(targetUser.getId(), targetUser.getEmail(), null, null, List.of(), false, null, null, null, null, null, null, false, null, List.of());
+
         UserUpdateRequest updateRequest = new UserUpdateRequest();
         updateRequest.setEmail("new@test.com");
         updateRequest.setPassword("new-password");
@@ -201,6 +209,8 @@ class UserServiceTest {
 
         when(userRepository.findByEmail(currentUser.getEmail())).thenReturn(Optional.of(currentUser));
         when(userRepository.findById(2L)).thenReturn(Optional.of(targetUser));
+        when(userMapper.userToUserDTO(targetUser)).thenReturn(userDTO);
+        when(userMapper.userDTOtoUser(userDTO)).thenReturn(targetUser);
         when(passwordEncoder.matches("new-password", "old-password")).thenReturn(false);
         when(passwordEncoder.encode("new-password")).thenReturn("encoded-password");
         when(aesEncryptionService.encrypt("+394111215989")).thenReturn("encrypted-phone");
@@ -215,11 +225,24 @@ class UserServiceTest {
 
     @Test
     void changeRoleShouldUpdateRole() {
+        User currentUser = new User();
+        currentUser.setId(2L);
+        currentUser.setName("test");
+        currentUser.setRole(Role.ADMIN);
+        currentUser.setEmail("test@test.com");
+
         User user = new User();
         user.setId(1L);
         user.setRole(Role.USER);
 
+        UserDTO userDTO = new UserDTO(user.getId(), user.getEmail(), null, null, List.of(), false, null, null, null, null, null, null, false, null, List.of());
+
+        mockCurrentUser(currentUser);
+
+        when(userRepository.findByEmail(currentUser.getEmail())).thenReturn(Optional.of(currentUser));
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userMapper.userToUserDTO(user)).thenReturn(userDTO);
+        when(userMapper.userDTOtoUser(userDTO)).thenReturn(user);
 
         userService.changeRole(Role.ADMIN, 1L);
 

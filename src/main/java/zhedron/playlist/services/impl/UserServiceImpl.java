@@ -2,6 +2,9 @@ package zhedron.playlist.services.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.security.core.Authentication;
@@ -111,20 +114,24 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User getById(long id) {
-        return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found with " + id));
+    @Cacheable(value = "users", key = "#id")
+    public UserDTO getById(long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found with " + id));
+
+        return userMapper.userToUserDTO(user);
     }
 
     @Override
+    @Cacheable(value = "users", key = "#userId")
     public List<PlaylistDTO> getPlaylists(long userId) {
-        User user = getById(userId);
+        UserDTO user = getById(userId);
 
         List<Playlist> playlists = userRepository.findByUserId(userId);
 
         List<PlaylistDTO> playlistResponses = null;
 
         for (Playlist playlist : playlists) {
-            if (user.getId() == playlist.getUser().getId()) {
+            if (user.id() == playlist.getUser().getId()) {
                 playlistResponses = playlists.stream().map(userMapper::playlistToPlaylistDTO).toList();
             } else {
                 playlistResponses = playlists.stream().filter(Playlist::isPublic).map(userMapper::playlistToPlaylistDTO).toList();
@@ -135,6 +142,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Caching(cacheable = {
+            @Cacheable(value = "playlists", key = "#playlistId"),
+            @Cacheable(value = "songs", key = "#songId")
+    })
     public void deleteSongFromPlaylist(long playlistId, long songId) {
         User user = getCurrentUser();
 
@@ -175,8 +186,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Cacheable(value = "users", key = "#userId")
     public void blockUser(long userId) {
-        User user = getById(userId);
+        UserDTO userDTO = getById(userId);
+
+        User user = userMapper.userDTOtoUser(userDTO);
 
         user.setBlocked(true);
 
@@ -186,17 +200,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Cacheable(value = "users", key = "#id")
     public Resource getProfilePicture(long id) throws MalformedURLException {
-        User user = getById(id);
+        UserDTO user = getById(id);
 
-        UserDTO userDTO = userMapper.userToUserDTO(user);
-
-        return new UrlResource(userDTO.profilePicture());
+        return new UrlResource(user.profilePicture());
     }
 
     @Override
+    @CacheEvict(value = "users", key = "#userId")
     public void updateUser(UserUpdateRequest userUpdate, long userId) throws Exception {
-        User user = getById(userId);
+        UserDTO userDTO = getById(userId);
+
+        User user = userMapper.userDTOtoUser(userDTO);
 
         User currentUser = getCurrentUser();
 
@@ -254,10 +270,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Cacheable(value = "users", key = "#userId")
     public void changeRole(Role role, long userId) {
-        User user = getById(userId);
+        User currentUser = getCurrentUser();
+
+        UserDTO userDTO = getById(userId);
+
+        User user = userMapper.userDTOtoUser(userDTO);
 
         user.setRole(role);
+
+        log.info("User {} changed role of user to {}", currentUser.getName(), role.name());
 
         userRepository.save(user);
     }
@@ -298,6 +321,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Cacheable(value = "subscriptions", key = "#subscriberId")
     public List<SubscriptionDTO> getSubscriptions(long subscriberId) {
         List<Subscription> subscriptions = subscriptionRepository.getSubscriptionsBySubscriberId(subscriberId);
 

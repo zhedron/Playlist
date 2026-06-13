@@ -16,4 +16,6 @@ public interface UserMapper {
 
     @Mapping(target = "isPublic", source = "public")
     PlaylistDTO playlistToPlaylistDTO(Playlist playlist);
+
+    User userDTOtoUser(UserDTO userDTO);
 }

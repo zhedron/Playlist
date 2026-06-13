@@ -1,9 +1,13 @@
 package zhedron.playlist.services.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import zhedron.playlist.dto.PlaylistDTO;
+import zhedron.playlist.dto.SongDTO;
 import zhedron.playlist.dto.request.PlaylistRequest;
 import zhedron.playlist.entity.Playlist;
 import zhedron.playlist.entity.Song;
@@ -13,6 +17,7 @@ import zhedron.playlist.exceptions.AccessDeniedException;
 import zhedron.playlist.exceptions.PlaylistNotFoundException;
 import zhedron.playlist.exceptions.UserNotFoundException;
 import zhedron.playlist.mapper.PlaylistMapper;
+import zhedron.playlist.mapper.SongMapper;
 import zhedron.playlist.repository.PlaylistRepository;
 import zhedron.playlist.repository.UserRepository;
 import zhedron.playlist.services.PlaylistService;
@@ -37,18 +42,22 @@ public class PlaylistServiceImpl implements PlaylistService {
     private final PlaylistMapper playlistMapper;
 
     private final String PATH = "playlist_image";
+    private final SongMapper songMapper;
 
-    public PlaylistServiceImpl(PlaylistRepository playlistRepository, UserRepository userRepository, SongService songService, UserService userService, PlaylistMapper playlistMapper) {
+    public PlaylistServiceImpl(PlaylistRepository playlistRepository, UserRepository userRepository, SongService songService, UserService userService, PlaylistMapper playlistMapper, SongMapper songMapper) {
         this.playlistRepository = playlistRepository;
         this.userRepository = userRepository;
         this.songService = songService;
         this.userService = userService;
         this.playlistMapper = playlistMapper;
+        this.songMapper = songMapper;
     }
 
     @Override
     public void addSong(long idSong, long playlistId) {
-        Song song = songService.getSongById(idSong);
+        SongDTO songDTO = songService.getSongById(idSong);
+
+        Song song = songMapper.songDTOtoSong(songDTO);
 
         User user = userService.getCurrentUser();
 
@@ -89,6 +98,7 @@ public class PlaylistServiceImpl implements PlaylistService {
     }
 
     @Override
+    @Cacheable(value = "playlists", key = "#playlistId")
     public void changeVisibility(long playlistId, boolean isPublic) {
         Playlist playlist = playlistRepository.findById(playlistId).orElseThrow(() -> new PlaylistNotFoundException("Playlist not found with " + playlistId));
 
@@ -140,6 +150,7 @@ public class PlaylistServiceImpl implements PlaylistService {
     }
 
     @Override
+    @CacheEvict(value = "playlists", key = "#playlistId")
     public void deletePlaylist(long playlistId) {
         User currentUser = userService.getCurrentUser();
 
@@ -155,6 +166,7 @@ public class PlaylistServiceImpl implements PlaylistService {
     }
 
     @Override
+    @Cacheable(value = "playlists", key = "#playlistId")
     public PlaylistDTO findPlaylistById(long playlistId) {
         Playlist playlist = playlistRepository.findById(playlistId).orElseThrow(() -> new PlaylistNotFoundException("Playlist not found with " + playlistId));
 
@@ -166,8 +178,12 @@ public class PlaylistServiceImpl implements PlaylistService {
     }
 
     @Override
+    @Caching(cacheable = {
+            @Cacheable(value = "users", key = "#userId"),
+            @Cacheable(value = "playlists", key = "#playlistId")
+    })
     public PlaylistDTO getPlaylist(long playlistId, long userId) {
-        User user = userService.getById(userId);
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found with " + userId));
 
         User currentUser = userService.getCurrentUser();
 

@@ -15,6 +15,7 @@ import zhedron.playlist.exceptions.AccessDeniedException;
 import zhedron.playlist.exceptions.PlaylistNotFoundException;
 import zhedron.playlist.exceptions.UserNotFoundException;
 import zhedron.playlist.mapper.PlaylistMapper;
+import zhedron.playlist.mapper.SongMapper;
 import zhedron.playlist.repository.PlaylistRepository;
 import zhedron.playlist.repository.UserRepository;
 import zhedron.playlist.services.impl.PlaylistServiceImpl;
@@ -53,6 +54,9 @@ class PlaylistServiceTest {
     @Mock
     private PlaylistMapper playlistMapper;
 
+    @Mock
+    private SongMapper songMapper;
+
     @Test
     void addSongShouldAddSongToExistingPlaylist() {
         User user = new User();
@@ -64,12 +68,15 @@ class PlaylistServiceTest {
         song.setId(5L);
         song.setDuration(180);
 
+        SongDTO songDTO = new SongDTO(song.getId(), null, null, 0, null, null, null, song.getDuration(), null, null, null, 0);
+
         Playlist playlist = new Playlist();
         playlist.setId(10L);
         playlist.setUser(user);
         playlist.setDuration(20L);
 
-        when(songService.getSongById(5L)).thenReturn(song);
+        when(songService.getSongById(5L)).thenReturn(songDTO);
+        when(songMapper.songDTOtoSong(songDTO)).thenReturn(song);
         when(userService.getCurrentUser()).thenReturn(user);
         when(playlistRepository.findById(10L)).thenReturn(Optional.of(playlist));
 
@@ -91,7 +98,9 @@ class PlaylistServiceTest {
         Song song = new Song();
         song.setId(5L);
 
-        when(songService.getSongById(5L)).thenReturn(song);
+        SongDTO songDTO = new SongDTO(song.getId(), null, null, 0, null, null, null, 0, null, null, null, 0);
+
+        when(songService.getSongById(5L)).thenReturn(songDTO);
         when(userService.getCurrentUser()).thenReturn(user);
         when(playlistRepository.findById(10L)).thenReturn(Optional.empty());
 
@@ -125,7 +134,9 @@ class PlaylistServiceTest {
         targetPlaylist.setId(10L);
         targetPlaylist.setUser(anotherUser);
 
-        when(songService.getSongById(5L)).thenReturn(song);
+        SongDTO songDTO = new SongDTO(song.getId(), null, null, 0, null, null, null, 0, null, null, null, 0);
+
+        when(songService.getSongById(5L)).thenReturn(songDTO);
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(playlistRepository.findById(10L)).thenReturn(Optional.of(targetPlaylist));
 
@@ -317,7 +328,7 @@ class PlaylistServiceTest {
 
         PlaylistDTO playlistDTO = new PlaylistDTO(10L, null, 0, 0, false, 0, null, null, null, null);
 
-        when(userService.getById(2L)).thenReturn(user);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(user));
         when(userService.getCurrentUser()).thenReturn(current);
         when(playlistRepository.findById(10L)).thenReturn(Optional.of(playlist));
         when(playlistMapper.toPlaylistDTO(playlist)).thenReturn(playlistDTO);
@@ -336,7 +347,7 @@ class PlaylistServiceTest {
         User user = new User();
         user.setId(2L);
 
-        when(userService.getById(2L)).thenReturn(user);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(user));
         when(userService.getCurrentUser()).thenReturn(current);
         when(playlistRepository.findById(10L)).thenReturn(Optional.empty());
 
@@ -363,10 +374,9 @@ class PlaylistServiceTest {
 
         user.setPlaylists(List.of(playlist));
 
-        when(userService.getById(2L)).thenReturn(user);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(user));
         when(userService.getCurrentUser()).thenReturn(current);
         when(playlistRepository.findById(10L)).thenReturn(Optional.of(playlist));
-
 
         AccessDeniedException exception = assertThrows(
                 AccessDeniedException.class,
@@ -393,7 +403,7 @@ class PlaylistServiceTest {
 
         user.setPlaylists(List.of(playlist1));
 
-        when(userService.getById(2L)).thenReturn(user);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(user));
         when(userService.getCurrentUser()).thenReturn(current);
         when(playlistRepository.findById(10L)).thenReturn(Optional.of(playlist));
 

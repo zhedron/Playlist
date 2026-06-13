@@ -112,9 +112,7 @@ public class UserController {
                             schema = @Schema(type = "object", example = "{\"message\": \"Not found a user {id}\"}")))
     })
     public UserDTO getUserById(@PathVariable long id) {
-        User user = userService.getById(id);
-
-        UserDTO userDTO = userMapper.userToUserDTO(user);
+        UserDTO userDTO = userService.getById(id);
 
         return userDTO.phone() != null && !userDTO.isHiddenPhone() ? userDTO.getByPhone(aesEncryptionService.decrypt(userDTO.phone())) : userDTO;
     }

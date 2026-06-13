@@ -1,5 +1,6 @@
 package zhedron.playlist.dto;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import zhedron.playlist.enums.Provider;
 import zhedron.playlist.enums.Role;
 
@@ -7,6 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
 public record UserDTO(long id, String email, LocalDateTime createdAt,
                       Role role, List<PlaylistDTO> playlists, boolean blocked, Provider provider,
                       String name, String about, String profilePicture,

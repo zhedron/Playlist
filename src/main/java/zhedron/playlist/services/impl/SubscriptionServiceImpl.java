@@ -1,8 +1,8 @@
 package zhedron.playlist.services.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import zhedron.playlist.entity.Subscription;
 import zhedron.playlist.entity.User;
 import zhedron.playlist.exceptions.SubscribedException;
@@ -28,7 +28,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    @Transactional
+    @Cacheable(value = "users", key = "#userId")
     public void subscribeToUser(long userId) {
         User currentUser = userService.getCurrentUser();
 
@@ -55,7 +55,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    @Transactional
+    @Cacheable(value = "users", key = "#userId")
     public void unsubscribeFromUser(long userId) {
         User currentUser = userService.getCurrentUser();
 

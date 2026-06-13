@@ -143,11 +143,11 @@ public class SongController {
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Song not found with {id}\"}")))
     })
     public SongDTO findSongById(@PathVariable long id) {
-        Song song = songService.getSongById(id);
+        SongDTO songDTO = songService.getSongById(id);
+
+        Song song = songMapper.songDTOtoSong(songDTO);
 
         song.setListeners(song.getListeners() + 1);
-
-        System.out.println(song.getCreator().getId());
 
         songRepository.save(song);
 
@@ -165,10 +165,12 @@ public class SongController {
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Cannot read file.\"}")))
     })
     public ResponseEntity<?> getSongById (@PathVariable long id) {
-        Song song = songService.getSongById(id);
+        SongDTO songDTO = songService.getSongById(id);
+
+        Song song = songMapper.songDTOtoSong(songDTO);
 
         try {
-            Path path = Paths.get(PATH).resolve(song.getFileName()).normalize();
+            Path path = Paths.get(PATH).resolve(songDTO.fileName()).normalize();
 
             Resource resource = new UrlResource(path.toUri());
 
@@ -246,15 +248,15 @@ public class SongController {
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object", example = "{\"message\": \"Song not found with {id}\"}")))
     })
     public ResponseEntity<?> getImageBySongId(@PathVariable long id) {
-        Song song = songService.getSongById(id);
+        SongDTO song = songService.getSongById(id);
 
         if (song != null) {
-            Path path = Paths.get(IMAGEPATH).resolve(song.getImagePath()).normalize();
+            Path path = Paths.get(IMAGEPATH).resolve(song.imagePath()).normalize();
 
             try {
                 Resource resource = new UrlResource(path.toUri());
 
-                return ResponseEntity.ok().contentType(MediaType.parseMediaType(song.getContentTypeImage())).body(resource);
+                return ResponseEntity.ok().contentType(MediaType.parseMediaType(song.contentType())).body(resource);
             } catch (IOException e) {
                 return ResponseEntity.badRequest().body(new MessageResponse("Error loading image"));
             }

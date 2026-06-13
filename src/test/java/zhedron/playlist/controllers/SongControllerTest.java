@@ -89,7 +89,8 @@ class SongControllerTest {
 
         SongDTO songDTO = new SongDTO(1L, "artist", "album", 3L, LocalDateTime.now(), "audio/mpeg", "track.mp3", 120, Type.SINGLE, null, null, 42L);
 
-        when(songService.getSongById(1L)).thenReturn(song);
+        when(songService.getSongById(1L)).thenReturn(songDTO);
+        when(songMapper.songDTOtoSong(songDTO)).thenReturn(song);
         when(songMapper.songToSongDTO(song)).thenReturn(songDTO);
 
         mockMvc.perform(get("/song/1"))
@@ -140,7 +141,6 @@ class SongControllerTest {
         SongRequest songRequest = new SongRequest();
         songRequest.setArtistName("artist");
         songRequest.setAlbumName("album");
-
         MockMultipartFile requestPart = new MockMultipartFile("requestSong", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(songRequest));
         MockMultipartFile audioPart = new MockMultipartFile("files", "track.jpg", MediaType.IMAGE_JPEG_VALUE, "wrong".getBytes());
         MockMultipartFile imagePart = new MockMultipartFile("image", "cover.jpg", MediaType.IMAGE_JPEG_VALUE, "image".getBytes());

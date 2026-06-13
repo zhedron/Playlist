@@ -142,8 +142,7 @@ class UserControllerTest {
 
     @Test
     void getUserByIdShouldReturnDecryptedPhoneWhenVisible() throws Exception {
-        when(userService.getById(1L)).thenReturn(user);
-        when(userMapper.userToUserDTO(user)).thenReturn(userDTO);
+        when(userService.getById(1L)).thenReturn(userDTO);
         when(aesEncryptionService.decrypt("encrypted-phone")).thenReturn("+394111215988");
 
         mockMvc.perform(get("/user/1"))

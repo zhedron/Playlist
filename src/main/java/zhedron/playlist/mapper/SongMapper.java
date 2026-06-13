@@ -14,4 +14,6 @@ public interface SongMapper {
     SongDTO songToSongDTO(Song song);
 
     List<SongDTO> songToSongDTOList(List<Song> songs);
+
+    Song songDTOtoSong(SongDTO songDTO);
 }

@@ -4,6 +4,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 import zhedron.playlist.dto.PlaylistDTO;
 import zhedron.playlist.dto.SubscriptionDTO;
+import zhedron.playlist.dto.UserDTO;
 import zhedron.playlist.dto.request.UserRequest;
 import zhedron.playlist.dto.request.UserUpdateRequest;
 import zhedron.playlist.entity.User;
@@ -18,7 +19,7 @@ public interface UserService {
 
     User findByEmail(String email);
 
-    User getById(long id);
+    UserDTO getById(long id);
 
     List<PlaylistDTO> getPlaylists(long userId);
 

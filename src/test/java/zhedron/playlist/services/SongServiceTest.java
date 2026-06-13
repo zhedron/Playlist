@@ -55,11 +55,14 @@ class SongServiceTest {
         Song song = new Song();
         song.setId(1L);
 
+        SongDTO songDTO = new SongDTO(song.getId(), null, null, 0, null, null, null, 0, null, null, null, 0);
+
         when(songRepository.findById(1L)).thenReturn(Optional.of(song));
+        when(songMapper.songToSongDTO(song)).thenReturn(songDTO);
 
-        Song result = songService.getSongById(1L);
+        SongDTO result = songService.getSongById(1L);
 
-        assertEquals(1L, result.getId());
+        assertEquals(1L, result.id());
     }
 
     @Test
