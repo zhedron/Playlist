@@ -2,6 +2,7 @@ package zhedron.playlist.services;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -21,12 +22,14 @@ import zhedron.playlist.repository.PlaylistRepository;
 import zhedron.playlist.repository.SongRepository;
 import zhedron.playlist.services.impl.SongServiceImpl;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
@@ -49,6 +52,9 @@ class SongServiceTest {
 
     @InjectMocks
     private SongServiceImpl songService;
+
+    @TempDir
+    private Path tempDir;
 
     @Test
     void getSongByIdShouldReturnSong() {
@@ -93,7 +99,7 @@ class SongServiceTest {
     }
 
     @Test
-    void deleteSongByIdShouldDeleteSongForOwner() {
+    void deleteSongByIdShouldDeleteSongForOwner() throws IOException {
         User owner = new User();
         owner.setId(5L);
         owner.setRole(Role.USER);
@@ -101,6 +107,17 @@ class SongServiceTest {
         Song song = new Song();
         song.setId(1L);
         song.setCreator(owner);
+        song.setFileName("track.mp3");
+        song.setImagePath("song.jpg");
+
+        Path songFile = tempDir.resolve(song.getFileName());
+        Path songImage = tempDir.resolve(song.getImagePath());
+
+        Files.createFile(songFile);
+        Files.createFile(songImage);
+
+        assertTrue(Files.exists(songFile));
+        assertTrue(Files.exists(songImage));
 
         when(songRepository.findById(1L)).thenReturn(Optional.of(song));
         when(userService.getCurrentUser()).thenReturn(owner);
