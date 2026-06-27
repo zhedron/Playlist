@@ -143,6 +143,22 @@ public class SongServiceImpl implements SongService {
         playlistRepository.deleteAll(playlists);
 
         songRepository.deleteById(id);
+
+        Path songPath = Paths.get(FILEPATH).resolve(song.getFileName()).normalize();
+
+        Path imagePath = Paths.get(FILEPATH_IMAGE).resolve(song.getImagePath()).normalize();
+
+        try {
+            Files.deleteIfExists(songPath);
+        } catch (IOException e) {
+            log.error("Failed to delete song: {}", e.getMessage());
+        }
+
+        try {
+            Files.deleteIfExists(imagePath);
+        } catch (IOException e) {
+            log.error("Failed to delete image: {}", e.getMessage());
+        }
     }
 
     @Override
